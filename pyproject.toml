@@ -1,0 +1,120 @@
+[tool.uv.workspace]
+members = [
+    "agent_server",
+    "pipeline",
+    "download_service",
+    "asp_server",
+    "shared_server_libs",
+    "rag_retrieval_server",
+]
+[dependency-groups]
+dev = [
+    "poethepoet",
+    "pytest",
+    "ruff",
+]
+
+# ── Dev run ──────────────────────────────────────────────────────────────
+[tool.poe.tasks.dev]
+help = "Start base dev env (postgres, phoenix, agent_server, frontend, rag)"
+cmd  = "setup/dev/run.bat -base"
+
+[tool.poe.tasks."dev:asp"]
+help = "Start base + ACSS (redis, acss-api, acss-worker)"
+cmd  = "setup/dev/run.bat -asp"
+
+[tool.poe.tasks."dev:pipeline"]
+help = "Start base + pipeline (streamlit)"
+cmd  = "setup/dev/run.bat -pipeline"
+
+[tool.poe.tasks."dev:download"]
+help = "Start base + download (redis, download-api, download-worker)"
+cmd  = "setup/dev/run.bat -download"
+
+[tool.poe.tasks."dev:rag"]
+help = "Start base + RAG retrieval server"
+cmd  = "setup/dev/run.bat -rag"
+
+[tool.poe.tasks."dev:all"]
+help = "Start all services"
+cmd  = "setup/dev/run.bat -all"
+
+# ── Local build ──────────────────────────────────────────────────────────
+[tool.poe.tasks.local-build]
+help = "Show build usage"
+cmd  = "setup/scripts/local-build/local-build.bat"
+
+[tool.poe.tasks."local-build:asp"]
+help = "Build ACSS wheels"
+cmd  = "setup/scripts/local-build/local-build.bat -asp"
+
+[tool.poe.tasks."local-build:agent"]
+help = "Build agent_server (LangGraph) wheels"
+cmd  = "setup/scripts/local-build/local-build.bat -langgraph"
+
+[tool.poe.tasks."local-build:pipeline"]
+help = "Build pipeline wheels"
+cmd  = "setup/scripts/local-build/local-build.bat -pipeline"
+
+[tool.poe.tasks."local-build:download"]
+help = "Build download-service wheels"
+cmd  = "setup/scripts/local-build/local-build.bat -download"
+
+[tool.poe.tasks."local-build:rag"]
+help = "Build RAG retrieval server wheels"
+cmd  = "setup/scripts/local-build/local-build.bat -rag"
+
+[tool.poe.tasks."local-build:all"]
+help = "Build all service wheels"
+cmd  = "setup/scripts/local-build/local-build.bat -all"
+
+[tool.poe.tasks."local-build:deps"]
+help = "Build all + force re-export requirements.txt"
+cmd  = "setup/scripts/local-build/local-build.bat -all -deps"
+
+# ── Deploy ───────────────────────────────────────────────────────────────
+
+[tool.poe.tasks.deploy]
+help = "Deploy to host: poe deploy <hostname> <smb-user> <smb-password> [--network_bill path] [--eds_url host:port] [--cwe_url host:port]"
+cmd = "setup/scripts/deploy/deploy-to-host.bat ${hostname} ${smb_user} ${smb_password}${network_bill:+ --network_bill ${network_bill}}${eds_url:+ --eds_url ${eds_url}}${cwe_url:+ --cwe_url ${cwe_url}}"
+
+[[tool.poe.tasks.deploy.args]]
+name = "hostname"
+positional = true
+required = true
+help = "Target hostname"
+
+[[tool.poe.tasks.deploy.args]]
+name = "smb_user"
+positional = true
+required = true
+help = "SMB username"
+
+[[tool.poe.tasks.deploy.args]]
+name = "smb_password"
+positional = true
+required = true
+help = "SMB password"
+
+[[tool.poe.tasks.deploy.args]]
+name = "network_bill"
+options = ["--network_bill"]
+help = "Override network BIL share path"
+
+[[tool.poe.tasks.deploy.args]]
+name = "eds_url"
+options = ["--eds_url"]
+help = "Override EDS API host:port"
+
+[[tool.poe.tasks.deploy.args]]
+name = "cwe_url"
+options = ["--cwe_url"]
+help = "Override CWE API host:port"
+
+
+
+# ── Single Image Build ──────────────────────────────────────────────────
+
+[tool.poe.tasks."single-image-build"]
+help = "After building all wheels with local-build, build a single Docker image tar for the entire application in the root /dist folder"
+cmd = "setup/scripts/deploy/create-dist.bat"

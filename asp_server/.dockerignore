@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.git/
+.gitignore
+*.md
+.python-version
+requirements.txt
+teoco_data_store/
+
+# Source code is shipped via wheels in dist/, not copied directly
+app/
+
+# Lock-hash marker used by local-build.bat (not needed inside image)
+dist/.lock-hash

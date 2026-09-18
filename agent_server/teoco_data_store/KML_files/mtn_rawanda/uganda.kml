@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Uganda</name>
+    <description>Country boundary of Uganda</description>
+
+    <Style id="ugandaStyle">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>4d0000ff</color>
+        <fill>1</fill>
+        <outline>1</outline>
+      </PolyStyle>
+    </Style>
+
+    <Placemark>
+      <name>Uganda</name>
+      <description>Republic of Uganda</description>
+      <styleUrl>#ugandaStyle</styleUrl>
+      <Polygon>
+        <extrude>0</extrude>
+        <altitudeMode>clampToGround</altitudeMode>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              31.86617,-1.02736,0
+              30.76986,-1.01455,0
+              30.419105,-1.134659,0
+              29.821519,-1.443322,0
+              29.579466,-1.341313,0
+              29.587838,-0.587406,0
+              29.8195,-0.2053,0
+              29.875779,0.59738,0
+              30.086154,1.062313,0
+              30.468508,1.583805,0
+              30.85267,1.849396,0
+              31.174149,2.204465,0
+              30.77332,2.33989,0
+              30.83385,3.50917,0
+              31.24556,3.7819,0
+              31.88145,3.55827,0
+              32.68642,3.79232,0
+              33.39,3.79,0
+              34.005,4.249885,0
+              34.47913,3.5556,0
+              34.59607,3.05374,0
+              35.03599,1.90584,0
+              34.6721,1.17694,0
+              34.18,0.515,0
+              33.893569,0.109814,0
+              33.903711,-0.95,0
+              31.86617,-1.02736,0
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+
+    <Placemark>
+      <name>Kampala (Capital)</name>
+      <Point>
+        <coordinates>32.5825,0.3476,0</coordinates>
+      </Point>
+    </Placemark>
+
+  </Document>
+</kml>

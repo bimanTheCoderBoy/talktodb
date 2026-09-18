@@ -1,0 +1,19 @@
+{
+  "$type": "Cellv214Type",
+  "technology": {
+    "active": "LTE"
+  },
+  "tech_key": "lte",
+  "lte": {
+    "supported": true,
+    "enabled": true
+  },
+  "feederDefaults": {
+    "logicalAntenna": {
+      "usePredInnerOuter": false
+    },
+    "lte": {
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "tech_key": "lte",
+
+  "cell_preview": {
+    "cell_iid": { "excel": "Cell: Identity",                           "transform": "str" },
+    "azimuth":  { "excel": "Property: Physical Antenna: Azimuth (deg)","transform": "float", "default": 0 },
+    "band":     { "excel": "Cell: LTE: Assigned Carrier",              "transform": "str" },
+    "pci":      { "excel": "Cell: LTE: PCI ID",                        "transform": "int" }
+  },
+
+  "root": {
+    "iid":          { "excel": "Cell: Identity", "transform": "str" },
+    "location.iid": { "excel": "Property: ID",   "transform": "str" }
+  },
+
+  "technology": {
+    "technology.fixed": { "excel": "Cell: LTE: Enabled", "transform": "bool" }
+  },
+
+  "parent": {
+    "parent.iid": { "source": "mu_lookup" }
+  },
+
+  "tech_fields": {
+    "lte.carrierParameters.iid":                 { "excel": "Cell: LTE: Assigned Carrier",              "transform": "str" },
+    "lte.carrierParameters.autoCalculatedMethod": { "excel": "Cell: LTE: Power Auto-Calculated Method", "transform": "str" },
+    "lte.carrierParameters.referenceSignalPPRE": { "excel": "Cell: LTE: Ref Signal PPRE (dBm)",         "transform": "float" },
+    "lte.carrierParameters.maxTxPower":          { "excel": "Cell: LTE: Max TX Power (dBm)",             "transform": "float" },
+    "lte.carrierParameters.physicalCellID":      { "excel": "Cell: LTE: PCI ID",                         "transform": "int" },
+    "lte.tac":                                   { "excel": "Cell: LTE: TAC",                            "transform": "int" },
+    "lte.firstAssignedRSI":                      { "excel": "Cell: LTE: First assigned RSI",             "transform": "int" },
+    "lte.suMimo.rxElements":                     { "excel": "Cell: LTE: SU-MIMO RX Elements",            "transform": "int" },
+    "lte.suMimo.txElements":                     { "excel": "Cell: LTE: SU-MIMO TX Elements",            "transform": "int" },
+    "lte.suMimo.dlEnabled":                      { "excel": "Cell: LTE: SU-MIMO DL Enabled",             "transform": "bool" },
+    "lte.suMimo.ulEnabled":                      { "excel": "Cell: LTE: SU-MIMO UL Enabled",             "transform": "bool" }
+  },
+
+  "feeder": {
+    "logicalAntenna.primaryModel.modelType.iid":       { "excel": "Property: Logical Antenna: Primary Prediction: Model",          "transform": "str" },
+    "logicalAntenna.primaryModel.radiusKM":            { "excel": "Property: Logical Antenna: Primary Prediction: Radius (km)",    "transform": "float" },
+    "logicalAntenna.primaryModel.resolutionMetres":    { "excel": "Property: Logical Antenna: Primary Prediction: Resolution (m)", "transform": "float" },
+    "logicalAntenna.passive.antennaPatternType.iid":   { "excel": "Property: Logical Antenna: Pattern",                            "transform": "str" },
+    "logicalAntenna.phyindex":                         { "excel": "Property: Physical Antenna: Index",                              "transform": "int" },
+    "logicalAntenna.index":                            { "excel": "Property: Logical Antenna: Index",                               "transform": "int" },
+    "physicalAntenna.antennaDevice.iid":               { "excel": "Property: Physical Antenna: Antenna Device",                    "transform": "split_backslash" },
+    "physicalAntenna.azimuth":                         { "excel": "Property: Physical Antenna: Azimuth (deg)",                      "transform": "float" },
+    "physicalAntenna.height":                          { "excel": "Property: Physical Antenna: Height - Inventory (m)",             "transform": "float" },
+    "physicalAntenna.tilt":                            { "excel": "Property: Physical Antenna: Mechanical Down Tilt (deg)",          "transform": "float" },
+    "physicalAntenna.absLocation.longitude":           { "excel": "Property: Location: X Coordinate",                               "transform": "float" },
+    "physicalAntenna.absLocation.latitude":            { "excel": "Property: Location: Y Coordinate",                               "transform": "float" },
+    "physicalAntenna.absLocation.epsg":                { "excel": "Property: Location: EPSG",                                       "transform": "int" }
+  }
+}

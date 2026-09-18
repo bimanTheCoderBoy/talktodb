@@ -1,0 +1,91 @@
+[project]
+name = "agent-server"
+version = "1.6.1"
+description = "TEOCO ASSET AUTONOMUS AGENT is a tool that helps you to manage your assets using AI and RAG."
+authors = [
+    { name = "Chandan Singh", email = "chandan.singh@teoco.com" },
+    { name = "Biman Kumar Das", email = "biman.das@teoco.com" },
+    { name = "Muhammad Bin Basid Masood", email = "muhammad.masood@teoco.com" },
+
+]
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+dependencies = [
+    "shared-server-libs",
+    "langgraph==1.2.11",
+    "langchain-core==1.6.0",
+    "langchain-openai==1.6.0",
+    "pydantic==2.13.4",
+    "python-dotenv==1.2.3",
+    "asyncpg==0.31.0",
+    "httpx==0.28.1",
+    "aiofiles==25.1.0",
+    "numpy==2.3.5",
+    "pandas==2.3.3",
+    "geopandas==1.1.4",
+    "rasterio==1.5.1",
+    "numba==0.67.0",
+    "shapely==2.1.2",
+    "Pillow==12.3.0",
+    "python-jose==3.5.0",
+    "cryptography==50.0.0",
+    "fastapi==0.141.1",
+    "python-multipart==0.0.32",
+    "sqlalchemy[asyncio]==2.0.52",
+    "arize-phoenix-otel==0.13.1",
+    "openinference-instrumentation-langchain==0.1.70",
+    "deepagents>=0.7.9",
+]
+
+
+[project.optional-dependencies]
+dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
+performance = ["numba>=0.58.0"]
+
+[build-system]
+requires = ["setuptools>=73.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+[tool.setuptools.package-data]
+"*" = ["py.typed", "*.json"]
+
+[tool.ruff]
+lint.select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "D",    # pydocstyle
+    "D401", # First line should be in imperative mood
+    "T201",
+    "UP",
+]
+lint.ignore = [
+    "UP006",
+    "UP007",
+    # We actually do want to import from typing_extensions
+    "UP035",
+    # Relax the convention by _not_ requiring documentation for every function parameter.
+    "D417",
+    "E501",
+]
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "UP"]
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[dependency-groups]
+dev = [
+    "anyio>=4.7.0",
+    "langgraph-cli[inmem]>=0.2.8",
+    "mypy>=1.13.0",
+    "pytest>=8.3.5",
+    "ruff>=0.8.2",
+]
+
+[tool.uv.sources]
+shared-server-libs = { workspace = true }

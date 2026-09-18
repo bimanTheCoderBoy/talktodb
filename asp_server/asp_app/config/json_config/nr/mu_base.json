@@ -1,0 +1,10 @@
+{
+  "$type": "MUNodev214Type",
+  "technology": {
+    "fixedtechnology": "NR"
+  },
+  "tech_key": "nrt",
+  "nrt": {
+    "enabled": true
+  }
+}

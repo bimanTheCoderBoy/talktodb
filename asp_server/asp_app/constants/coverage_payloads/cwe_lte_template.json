@@ -1,0 +1,22 @@
+{
+    "arrayTypes": [],
+    "cells": [],
+    "extents": {
+        "type": "Feature",
+        "geometry": {
+            "type": "LineString",
+            "coordinates": []
+        },
+        "properties": {
+            "subType": "Rectangle",
+            "epsg": 4326,
+            "mode": "Exact"
+        }
+    },
+    "output": {
+        "type": "",
+        "name": "",
+        "location": "",
+        "epsg": 0
+    }
+}

@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+
+# Build output (will be created inside Docker)
+dist
+
+# Git
+.git
+.gitignore
+
+# Environment files (we use build args instead)
+.env
+.env.*
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md

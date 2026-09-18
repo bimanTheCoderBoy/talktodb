@@ -1,0 +1,10 @@
+{
+  "$type": "MUNodev214Type",
+  "technology": {
+    "fixedtechnology": "LTE"
+  },
+  "tech_key": "lte",
+  "lte": {
+    "enabled": true
+  }
+}

@@ -1,0 +1,27 @@
+{
+    "arrayTypes": [
+       
+    ],
+    "cells": [
+        
+    ],
+    "extents": {
+        "type": "Feature",
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              
+            ]
+        },
+        "properties": {
+            "subType": "Rectangle",
+            "epsg": 4326,
+            "mode": "Exact"
+        }
+    },
+    "output": {
+        "type": "BILGRC",
+        "name": "AMX_testing LTE",
+        "location": "\\\\d48d-ast-app01.emea.teo.earth\\Mapdata\\Jersey\\Output Arrays"
+    }
+}

@@ -1,0 +1,21 @@
+{
+  "tech_key": "nrt",
+
+  "grouping": {
+    "identity": { "excel": "MU Node: Identity",    "transform": "str" },
+    "plmn":     { "excel": "MU Node: Parent PLMN",  "transform": "str", "default": "PLMN0" },
+    "carriers": { "excel": "MU Node: NR Carriers",  "transform": "str" }
+  },
+
+  "root": {
+    "location.iid": { "excel": "Property: ID", "transform": "str" }
+  },
+
+  "plmn": {
+    "plmn.iid": { "excel": "MU Node: Parent PLMN", "transform": "str", "default": "PLMN0" }
+  },
+
+  "carriers": {
+    "carriers[].iid": { "excel": "MU Node: NR Carriers", "transform": "str" }
+  }
+}

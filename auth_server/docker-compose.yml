@@ -1,0 +1,77 @@
+name: aana_auth_server
+
+services:
+  keycloak-db:
+    image: postgres:16-alpine
+    container_name: keycloak-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - keycloak_postgres_data:/var/lib/postgresql/data
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.2
+    container_name: keycloak-server
+    environment:
+      # Admin credentials
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
+      KEYCLOAK_ADMIN: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KEYCLOAK_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
+      # Database configuration
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      
+      # Hostname configuration
+      KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KEYCLOAK_SSL_VERIFY: false
+
+      # HTTPS/TLS configuration
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/tls.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/tls.key
+      KC_HTTP_ENABLED: true  # Keep HTTP for internal health checks
+
+      # Health and metrics
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+    volumes:
+      - ./realms:/opt/keycloak/data/import
+      - ../setup/certs/tls.crt:/opt/keycloak/conf/tls.crt:ro
+      - ../setup/certs/tls.key:/opt/keycloak/conf/tls.key:ro
+    command: start --import-realm
+    ports:
+      - "${KEYCLOAK_PORT}:8080"
+      - "${KEYCLOAK_HTTPS_PORT:-8443}:8443"
+      - "${KEYCLOAK_METRICS_PORT}:9000"
+
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+
+volumes:
+  keycloak_postgres_data:
+    driver: local
+
+networks:
+  keycloak-network:
+    driver: bridge
+
