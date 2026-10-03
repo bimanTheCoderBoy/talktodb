@@ -12,8 +12,8 @@ from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
-# Fixed database name for user-level configuration
-USER_DB_NAME = "user"
+# Fixed database name for user-level configuration (ranora_config)
+USER_DB_NAME = os.getenv("RANORA_CONFIG_DB_NAME", "ranora_config")
 
 
 class DatabaseConfig(BaseModel):
@@ -71,6 +71,8 @@ class EngineRegistry:
             # Auto-create tables for the "user" database (when creating its engine)
             if key == USER_DB_NAME:
                 from api.db.models import Base
+                import database_context_retrieval.domain.entity  # noqa: F401 - register catalog ORM
+
                 async with engine.begin() as conn:
                     await conn.run_sync(Base.metadata.create_all)
                     await conn.execute(
@@ -79,7 +81,7 @@ class EngineRegistry:
                             "ADD COLUMN IF NOT EXISTS column_checks JSONB DEFAULT '[]'::jsonb"
                         )
                     )
-                logger.info("Created/verified tables in 'user' database.")
+                logger.info("Created/verified tables in %r database.", USER_DB_NAME)
 
             cls._engines[key] = engine
             logger.info(f"Created SQLAlchemy engine for project: {key}")
