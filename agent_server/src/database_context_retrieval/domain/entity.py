@@ -1,90 +1,98 @@
-"""SQLAlchemy models for the global schema catalog in ranora_config."""
-
 from __future__ import annotations
 
-from datetime import datetime
-
-from sqlalchemy import Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import ForeignKey, PrimaryKeyConstraint, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from api.db.models import Base
+from shared_server_libs.infra.ranora_config_orm import RanoraConfigBase, TimestampMixin
 
 
-class CatalogTable(Base):
+class CatalogTable(RanoraConfigBase, TimestampMixin):
     __tablename__ = "catalog_table"
 
-    id = Column(String, primary_key=True)
-    name = Column(String, nullable=False, unique=True, index=True)
-    description = Column(Text, nullable=False, default="")
-    primary_key_columns = Column(ARRAY(String), nullable=False, default=list)
-    important_columns = Column(ARRAY(String), nullable=True)
-    notes = Column(ARRAY(Text), nullable=False, default=list)
-    created_at = Column(DateTime, nullable=False, default=datetime.now)
-    updated_at = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+    name: Mapped[str] = mapped_column(String, primary_key=True)
+    description: Mapped[str] = mapped_column(Text, nullable=False, default="", insert_default="")
+    primary_key_columns: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False, default=list, insert_default=list
+    )
+    important_columns: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
+    notes: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), nullable=False, default=list, insert_default=list
+    )
 
-    columns = relationship(
-        "CatalogColumn",
+    columns: Mapped[list[CatalogColumn]] = relationship(
         back_populates="table",
-        foreign_keys="CatalogColumn.table_name",
+        cascade="all, delete-orphan",
+    )
+    outgoing_relations: Mapped[list[CatalogRelation]] = relationship(
+        back_populates="source_table_ref",
+        foreign_keys="CatalogRelation.source_table",
+        cascade="all, delete-orphan",
+    )
+    incoming_relations: Mapped[list[CatalogRelation]] = relationship(
+        back_populates="target_table_ref",
+        foreign_keys="CatalogRelation.target_table",
     )
 
-    def __repr__(self) -> str:
-        return f"<CatalogTable(id={self.id!r}, name={self.name!r})>"
 
-
-class CatalogColumn(Base):
+class CatalogColumn(RanoraConfigBase, TimestampMixin):
     __tablename__ = "catalog_column"
+    __table_args__ = (PrimaryKeyConstraint("table_name", "column_name"),)
 
-    id = Column(String, primary_key=True)
-    table_name = Column(
-        String,
+    table_name: Mapped[str] = mapped_column(
         ForeignKey("catalog_table.name", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    column_name = Column(String, nullable=False)
-    data_type = Column(String, nullable=False)
-    description = Column(Text, nullable=False, default="")
-    example_use_cases = Column(Text, nullable=False, default="")
-    created_at = Column(DateTime, nullable=False, default=datetime.now)
-    updated_at = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+    column_name: Mapped[str] = mapped_column(String, nullable=False)
+    data_type: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False, default="", insert_default="")
+    example_use_cases: Mapped[str] = mapped_column(Text, nullable=False, default="", insert_default="")
 
-    table = relationship(
-        "CatalogTable",
-        back_populates="columns",
-        foreign_keys=[table_name],
-    )
-
-    def __repr__(self) -> str:
-        return f"<CatalogColumn(id={self.id!r})>"
+    table: Mapped[CatalogTable] = relationship(back_populates="columns")
 
 
-class CatalogRelation(Base):
+class CatalogRelation(RanoraConfigBase, TimestampMixin):
     __tablename__ = "catalog_relation"
+    __table_args__ = (
+        PrimaryKeyConstraint(
+            "source_table",
+            "source_column",
+            "target_table",
+            "target_column",
+            "relationship_type",
+        ),
+    )
 
-    id = Column(String, primary_key=True)
-    source_table = Column(
-        String,
+    source_table: Mapped[str] = mapped_column(
         ForeignKey("catalog_table.name", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    source_column = Column(String, nullable=False)
-    target_table = Column(
-        String,
+    source_column: Mapped[str] = mapped_column(String, nullable=False)
+    target_table: Mapped[str] = mapped_column(
         ForeignKey("catalog_table.name", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    target_column = Column(String, nullable=False)
-    relationship_type = Column(String, nullable=False)
-    semantic_meaning = Column(Text, nullable=False, default="")
-    related_tables = Column(ARRAY(String), nullable=False, default=list)
-    columns_attached = Column(ARRAY(String), nullable=False, default=list)
-    notes = Column(ARRAY(Text), nullable=False, default=list)
-    created_at = Column(DateTime, nullable=False, default=datetime.now)
-    updated_at = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+    target_column: Mapped[str] = mapped_column(String, nullable=False)
+    relationship_type: Mapped[str] = mapped_column(String, nullable=False)
+    semantic_meaning: Mapped[str] = mapped_column(Text, nullable=False, default="", insert_default="")
+    related_tables: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False, default=list, insert_default=list
+    )
+    columns_attached: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False, default=list, insert_default=list
+    )
+    notes: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), nullable=False, default=list, insert_default=list
+    )
 
-    def __repr__(self) -> str:
-        return f"<CatalogRelation(id={self.id!r})>"
+    source_table_ref: Mapped[CatalogTable] = relationship(
+        back_populates="outgoing_relations",
+        foreign_keys=[source_table],
+    )
+    target_table_ref: Mapped[CatalogTable] = relationship(
+        back_populates="incoming_relations",
+        foreign_keys=[target_table],
+    )

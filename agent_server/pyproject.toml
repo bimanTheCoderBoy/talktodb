@@ -89,3 +89,6 @@ dev = [
 
 [tool.uv.sources]
 shared-server-libs = { workspace = true }
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

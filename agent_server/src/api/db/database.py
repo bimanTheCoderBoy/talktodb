@@ -72,9 +72,11 @@ class EngineRegistry:
             if key == USER_DB_NAME:
                 from api.db.models import Base
                 import database_context_retrieval.domain.entity  # noqa: F401 - register catalog ORM
+                from shared_server_libs.infra.ranora_config_orm import RanoraConfigBase
 
                 async with engine.begin() as conn:
                     await conn.run_sync(Base.metadata.create_all)
+                    await conn.run_sync(RanoraConfigBase.metadata.create_all)
                     await conn.execute(
                         text(
                             "ALTER TABLE user_audit_custom_rule "

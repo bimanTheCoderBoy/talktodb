@@ -5,7 +5,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-USER_DB_NAME = "user"
+RANORA_CONFIG_DB_NAME = os.getenv("RANORA_CONFIG_DB_NAME", "ranora_config")
 
 
 class PostgresConnectionSettings(BaseModel):

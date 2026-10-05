@@ -45,6 +45,8 @@ from computer.config.logger import get_computer_logger
 from computer.config.tool import get_file_system_tool_config
 from computer.skills.skill_discovery_adapter import FilesystemSkillDiscoveryAdapter
 from computer.skills.skill_discovery_service import SkillDiscoveryService
+from shared_server_libs.agent_db_access import init_agent_db_access, shutdown_agent_db_access
+from shared_server_libs.infra.config import PostgresConnectionSettings, RedisSettings
 
 computer_skills_logger = get_computer_logger("computer.skills.startup")
 
@@ -54,11 +56,16 @@ SKILLS_ROOT = Path(get_file_system_tool_config.base_dir) / "computer" / "skills"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
+        init_agent_db_access(
+            PostgresConnectionSettings.from_env(),
+            RedisSettings.from_env(),
+        )
         SkillDiscoveryService(FilesystemSkillDiscoveryAdapter(), SKILLS_ROOT).init()
     except RuntimeError as e:
         computer_skills_logger.error("[SKILLS] Startup skill discovery failed: %s", e, exc_info=True)
         raise
     yield
+    await shutdown_agent_db_access()
 
 
 # ============== Application ==============

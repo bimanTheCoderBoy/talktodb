@@ -5,12 +5,20 @@ from ..core.logger import CustomLogger
 from typing import List, Tuple
 import logging
 from ..core.exceptions import RerankerError
+from ..schemas.catalog import CatalogColumn
 from ..schemas.chunk_schemas import ChildChunk
 from ..interfaces.rerank_adapter_interface import RerankAdapterInterface
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
 
 model_executor = ThreadPoolExecutor(max_workers=2)
+
+
+def _catalog_rerank_text(column: CatalogColumn) -> str:
+    return (
+        f"{column.column_id} ({column.data_type}). "
+        f"{column.description} Example use cases: {column.example_use_cases}."
+    )
 
 
 class RerankerAdapter(RerankAdapterInterface):
@@ -46,25 +54,33 @@ class RerankerAdapter(RerankAdapterInterface):
             raise RuntimeError("RerankerAdapter not initialized. Call initialize() first.")
         return cls._instance
     
+    async def _rerank_scores(self, query: str, texts: List[str]) -> List[float]:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(model_executor, self.model.rerank, query, texts)
+        return list(result)
 
-
-    
     async def rerank(self, query: str, chunks: List[ChildChunk]) -> List[Tuple[int, float]]:
         try:
-            # query_doc_pairs = [(query, chunk.text) for chunk in chunks]
             chunk_ids = [chunk.child_id for chunk in chunks]
             chunk_texts = [chunk.text for chunk in chunks]
-            #put the heavy task in a thread pool
-            loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(model_executor, self.model.rerank, query, chunk_texts)
-            scores = list(result)
-            re_ranked_chunk_ids=list(zip(chunk_ids, scores))
+            scores = await self._rerank_scores(query, chunk_texts)
+            re_ranked_chunk_ids = list(zip(chunk_ids, scores))
             re_ranked_chunk_ids.sort(key=lambda x: x[1], reverse=True)
-            return re_ranked_chunk_ids[:self.config.top_n]
-
-
+            return re_ranked_chunk_ids[: self.config.top_n]
         except Exception as e:
             raise RerankerError(message=f"Error reranking chunks: {e}", status_code=500) from e
 
-
-    
+    async def rerank_catalog(
+        self,
+        query: str,
+        columns: List[CatalogColumn],
+    ) -> List[Tuple[str, float]]:
+        try:
+            column_ids = [col.column_id for col in columns]
+            texts = [_catalog_rerank_text(col) for col in columns]
+            scores = await self._rerank_scores(query, texts)
+            ranked = list(zip(column_ids, scores))
+            ranked.sort(key=lambda x: x[1], reverse=True)
+            return ranked[: self.config.top_n]
+        except Exception as e:
+            raise RerankerError(message=f"Error reranking catalog columns: {e}", status_code=500) from e

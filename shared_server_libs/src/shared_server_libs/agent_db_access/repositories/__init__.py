@@ -4,7 +4,8 @@ __all__ = [
     "BaseDatabaseRepository",
     "UserProjectScopeRepository",
     "RLSAdapterHelper",
-    "create_rls_adapter_helper",
+    "RLSCacheAdapterInvalidator",
+    "RLSCacheBase",
 ]
 
 
@@ -21,16 +22,16 @@ def __getattr__(name: str):
         )
 
         return UserProjectScopeRepository
-    if name == "RLSAdapterHelper":
-        from shared_server_libs.agent_db_access.repositories.rls_adapter_helper import (
+    if name in ("RLSAdapterHelper", "RLSCacheAdapterInvalidator", "RLSCacheBase"):
+        from shared_server_libs.agent_db_access.repositories.rls_cache_adapter_helper import (
+            RLSCacheAdapterInvalidator,
+            RLSCacheBase,
             RLSAdapterHelper,
         )
 
-        return RLSAdapterHelper
-    if name == "create_rls_adapter_helper":
-        from shared_server_libs.agent_db_access.repositories.rls_adapter_helper import (
-            create_rls_adapter_helper,
-        )
-
-        return create_rls_adapter_helper
+        return {
+            "RLSAdapterHelper": RLSAdapterHelper,
+            "RLSCacheAdapterInvalidator": RLSCacheAdapterInvalidator,
+            "RLSCacheBase": RLSCacheBase,
+        }[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

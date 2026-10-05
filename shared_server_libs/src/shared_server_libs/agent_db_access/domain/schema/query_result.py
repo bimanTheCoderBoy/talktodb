@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class QueryResult(BaseModel):
     success: bool = Field(description="Whether the query executed successfully")
     columns: list[str] = Field(default_factory=list)
-    rows: list[dict[str, Any]] = Field(default_factory=list)
+    rows: list[list[Any]] = Field(default_factory=list)
     row_count: int = Field(default=0)
     error: str | None = Field(default=None)
 

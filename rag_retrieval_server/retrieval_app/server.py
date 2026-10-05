@@ -5,10 +5,12 @@ import os
 import uvicorn
 from .config.server_config import get_server_config
 from .core.exception_handler import exception_handler
+from .apis.v1.catalog_retrieval_router import catalog_retrieval_router
 from .apis.v1.retrieval_router import retrieval_router
 from fastapi.middleware.cors import CORSMiddleware
 from .core.logger import CustomLogger
 from .core.lancedb_client import LanceDBClient
+from .core.catalog_lancedb_client import CatalogLanceDBClient
 from .adapters.embedding_adapter import EmbeddingAdapter
 from .adapters.reranker_adapter import RerankerAdapter
 load_dotenv()
@@ -21,6 +23,7 @@ async def lifespan(app: FastAPI):
     print("Starting up...")
     CustomLogger.initialize()
     await LanceDBClient.initialize()
+    await CatalogLanceDBClient.initialize()
     EmbeddingAdapter.initialize()
     RerankerAdapter.initialize()
     yield
@@ -52,6 +55,7 @@ async def health_check():
     return {"status": "healthy", "service": "rag-retrieval-server"}
 
 app.include_router(retrieval_router, prefix="/api/v1")
+app.include_router(catalog_retrieval_router, prefix="/api/v1")
 app.add_exception_handler(Exception, exception_handler)
 
 

@@ -24,7 +24,10 @@ async def executor_node(state: AgentState, runtime: Runtime[ctx_schema_State]):
         raise ValueError("No user email found in runtime context. provide a user email in the runtime context or in the state.")
     else:
         try:
-            tools_to_use = await get_computer_tools_for_user(user_email)
+            tools_to_use = await get_computer_tools_for_user(
+                user_email,
+                project_name=project_name,
+            )
 
             logger.info(f"Loaded user-scoped filesystem tools for {user_email}")
         except ValueError as e:

@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,40 +18,36 @@ from shared_server_libs.agent_db_access.domain.schema.query_result import (
     BulkStatementResult,
     QueryResult,
 )
-from shared_server_libs.agent_db_access.repositories.rls_adapter_helper import RLSAdapterHelper
-from shared_server_libs.infra.project_session_registry import ProjectSessionRegistry
+from shared_server_libs.agent_db_access.repositories.rls_cache_adapter_helper import RLSAdapterHelper
 
 logger = logging.getLogger(__name__)
 
 
 class BaseDatabaseRepository(IBaseDatabaseRepository):
-    def __init__(self, rls_helper: RLSAdapterHelper) -> None:
+    def __init__(self, rls_helper: RLSAdapterHelper, project_session: AsyncSession) -> None:
         self._rls_helper = rls_helper
+        self._project_session = project_session
 
-    @asynccontextmanager
-    async def get_session(
+    async def _apply_rls_if_needed(
         self,
         project_name: str,
         email: str,
         *,
-        use_rls: bool = True,
-    ) -> AsyncIterator[AsyncSession]:
-        sessionmaker = await ProjectSessionRegistry.get_sessionmaker(project_name)
-        async with sessionmaker() as session:
-            async with session.begin():
-                if use_rls:
-                    iids = await self._rls_helper.get_scoped_cell_iids(project_name, email)
-                    if not iids:
-                        raise ScopeNotConfiguredError(project_name, email)
-                    await session.execute(
-                        text("SELECT set_config('app.scope_mode', :mode, true)"),
-                        {"mode": "restricted"},
-                    )
-                    await session.execute(
-                        text("SELECT set_config('app.scoped_cell_iids', :iids, true)"),
-                        {"iids": json.dumps(iids)},
-                    )
-                yield session
+        use_rls: bool,
+    ) -> None:
+        if not use_rls:
+            return
+        iids = await self._rls_helper.get_scoped_cell_iids(project_name, email)
+        if not iids:
+            raise ScopeNotConfiguredError(project_name, email)
+        await self._project_session.execute(
+            text("SELECT set_config('app.scope_mode', :mode, true)"),
+            {"mode": "restricted"},
+        )
+        await self._project_session.execute(
+            text("SELECT set_config('app.scoped_cell_iids', :iids, true)"),
+            {"iids": json.dumps(iids)},
+        )
 
     async def run_query(
         self,
@@ -65,15 +60,16 @@ class BaseDatabaseRepository(IBaseDatabaseRepository):
     ) -> QueryResult:
         bound = params or {}
         try:
-            async with self.get_session(project_name, email, use_rls=use_rls) as session:
+            async with self._project_session.begin():
+                await self._apply_rls_if_needed(project_name, email, use_rls=use_rls)
                 logger.info("Running query: %s", query)
                 logger.info("Parameters: %s", bound)
-                result = await session.execute(text(query), bound)
+                result = await self._project_session.execute(text(query), bound)
                 if not result.returns_rows:
                     return QueryResult(success=True, columns=[], rows=[], row_count=0)
 
                 columns = list(result.keys())
-                rows = [dict(row) for row in result.mappings().all()]
+                rows = [list(row) for row in result.all()]
                 return QueryResult(
                     success=True,
                     columns=columns,
@@ -99,10 +95,11 @@ class BaseDatabaseRepository(IBaseDatabaseRepository):
 
         results: list[BulkStatementResult] = []
         try:
-            async with self.get_session(project_name, email, use_rls=use_rls) as session:
+            async with self._project_session.begin():
+                await self._apply_rls_if_needed(project_name, email, use_rls=use_rls)
                 for index, (query, params) in enumerate(statements):
                     try:
-                        await session.execute(text(query), params or {})
+                        await self._project_session.execute(text(query), params or {})
                         results.append(BulkStatementResult(index=index, success=True))
                     except Exception as exc:
                         results.append(

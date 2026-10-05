@@ -12,11 +12,15 @@ logger = get_computer_logger(__name__)
 
 async def tool_node_wrapper(state: AgentState, runtime: Runtime[ctx_schema_State]):
     user_email = getattr(runtime.context, "user_email", None) or getattr(state, "user_email", None)
+    project_name = getattr(runtime.context, "project_name", None) or getattr(state, "project_name", None)
     if not user_email:
         logger.error("No user email found in runtime context or in the state. provide a user email in the runtime context or in the state.")
         raise ValueError("No user email found in runtime context or in the state. provide a user email in the runtime context or in the state.")
     else:
-        fs_tools = await get_computer_tools_for_user(user_email)
+        fs_tools = await get_computer_tools_for_user(
+            user_email,
+            project_name=project_name,
+        )
     tool_node = ToolNode(tools=fs_tools)
     last_message = state.internal_messages[-1]
     if not hasattr(last_message, "tool_calls") or not last_message.tool_calls:

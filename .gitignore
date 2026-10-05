@@ -168,3 +168,4 @@ frontend/public/documentations/
 /setup/scripts/deploy/setup-wsl-portproxy.ps1
 /thoughts/**
 /docs/**
+experiments/**
