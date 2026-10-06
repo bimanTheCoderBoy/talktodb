@@ -6,6 +6,7 @@ from langchain_core.tools import BaseTool, tool
 from pydantic import BaseModel, Field
 
 from computer.config.logger import get_computer_logger
+from computer.utils.sql_guard import validate_read_only_sql
 from database_context_retrieval.domain.exception.catalog_column import CatalogColumnError
 from database_context_retrieval.domain.exception.catalog_context_search import (
     CatalogContextSearchError,
@@ -251,14 +252,34 @@ def _make_run_db_query_tool(project_name: str, user_email: str) -> BaseTool:
 
         Use after get_database_table when you need actual data. Pass named parameters via params
         when the SQL uses bind placeholders. Returns columns, rows, and row_count as JSON.
+        Only a single read-only SELECT statement is accepted.
         """
         logger.info(
             "[DB_CONTEXT] run_db_query project=%r email=%r",
             normalized_project,
             normalized_email,
         )
+        is_read_only, rejection = validate_read_only_sql(query)
+        if not is_read_only:
+            logger.warning("[DB_CONTEXT] run_db_query rejected by read-only guard: %s", rejection)
+            return QueryResult(success=False, error=rejection).model_dump_json()
+
         try:
             async with get_repository(normalized_project) as repository:
+                plan = await repository.run_query(
+                    normalized_project,
+                    normalized_email,
+                    f"EXPLAIN {query}",
+                    params,
+                    use_rls=True,
+                )
+                if not plan.success:
+                    logger.warning("[DB_CONTEXT] run_db_query EXPLAIN failed: %s", plan.error)
+                    return QueryResult(
+                        success=False,
+                        error=f"Query failed EXPLAIN validation and was not executed: {plan.error}",
+                    ).model_dump_json()
+
                 result = await repository.run_query(
                     normalized_project,
                     normalized_email,

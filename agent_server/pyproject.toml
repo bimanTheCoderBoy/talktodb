@@ -33,6 +33,7 @@ dependencies = [
     "fastapi==0.141.1",
     "python-multipart==0.0.32",
     "sqlalchemy[asyncio]==2.0.52",
+    "sqlglot==30.21.0",
     "arize-phoenix-otel==0.13.1",
     "openinference-instrumentation-langchain==0.1.70",
     "deepagents>=0.7.9",

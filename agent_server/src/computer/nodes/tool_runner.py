@@ -1,14 +1,58 @@
+from typing import Any
+
 from langchain_core.messages import ToolMessage, AIMessage
 from langgraph.config import get_stream_writer
 from langgraph.runtime import Runtime
 from computer.state import AgentState, ctx_schema_State
 from computer.tools import get_computer_tools_for_user
 from computer.config.logger import get_computer_logger
+from computer.utils.tool_result_format import (
+    format_llm_tool_result,
+    format_ui_tool_result,
+    truncate_tool_result_for_llm,
+)
 from langgraph.prebuilt import ToolNode
 from langgraph.types import Command
 from langchain_core.runnables import RunnableConfig
 
 logger = get_computer_logger(__name__)
+
+
+def _tool_call_registry(tool_calls: list[Any]) -> dict[str, tuple[str, dict[str, Any]]]:
+    registry: dict[str, tuple[str, dict[str, Any]]] = {}
+    for tc in tool_calls:
+        if isinstance(tc, dict):
+            tc_id = tc.get("id")
+            name = tc.get("name")
+            args = tc.get("args") or {}
+        else:
+            tc_id = getattr(tc, "id", None)
+            name = getattr(tc, "name", None)
+            args = getattr(tc, "args", None) or {}
+        if tc_id and name:
+            registry[str(tc_id)] = (str(name), dict(args))
+    return registry
+
+
+def _split_tool_message_for_channels(
+    message: ToolMessage,
+    registry: dict[str, tuple[str, dict[str, Any]]],
+) -> tuple[ToolMessage, ToolMessage]:
+    tc_id = message.tool_call_id
+    tool_name, tool_args = registry.get(str(tc_id), (None, {}))
+    if not tool_name:
+        llm_message = message.model_copy(
+            update={"content": truncate_tool_result_for_llm(message.content)}
+        )
+        return llm_message, message
+    llm_content = truncate_tool_result_for_llm(
+        format_llm_tool_result(tool_name, message.content, tool_args=tool_args)
+    )
+    ui_content = format_ui_tool_result(tool_name, message.content, tool_args=tool_args)
+    return (
+        ToolMessage(content=llm_content, tool_call_id=tc_id, name=tool_name),
+        ToolMessage(content=ui_content, tool_call_id=tc_id, name=tool_name),
+    )
 
 async def tool_node_wrapper(state: AgentState, runtime: Runtime[ctx_schema_State]):
     user_email = getattr(runtime.context, "user_email", None) or getattr(state, "user_email", None)
@@ -27,6 +71,7 @@ async def tool_node_wrapper(state: AgentState, runtime: Runtime[ctx_schema_State
         return {"internal_messages": state.internal_messages}
 
     tool_calls = last_message.tool_calls
+    tool_call_registry = _tool_call_registry(tool_calls)
     tool_outputs = await tool_node.ainvoke(tool_calls)
     if isinstance(tool_outputs, dict):
         tool_outputs = tool_outputs.get("messages", [])
@@ -60,8 +105,11 @@ async def tool_node_wrapper(state: AgentState, runtime: Runtime[ctx_schema_State
                     else:
                         # Non-reducer updates: later items overwrite earlier ones
                         compiled_updates[key] = val
+        elif isinstance(item, ToolMessage):
+            internal_msg, ui_msg = _split_tool_message_for_channels(item, tool_call_registry)
+            internal_messages_to_add.append(internal_msg)
+            ui_messages_to_add.append(ui_msg)
         else:
-            # Handle standard ToolMessage returns
             internal_messages_to_add.append(item)
             ui_messages_to_add.append(item)
 

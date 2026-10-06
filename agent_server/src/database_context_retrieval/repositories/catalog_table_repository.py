@@ -14,7 +14,7 @@ from database_context_retrieval.domain.schema.catalog_table import (
     CatalogTableLookupResult,
 )
 
-DEFAULT_COLUMN_LIMIT = 15
+DEFAULT_COLUMN_LIMIT = 5
 DEFAULT_COLUMN_OFFSET = 0
 
 
@@ -63,8 +63,6 @@ class CatalogTableRepository(ICatalogTableRepository):
                     else None
                 ),
                 notes=list(table_row.notes or []),
-                created_at=table_row.created_at,
-                updated_at=table_row.updated_at,
             ),
             related_table_names=related_table_names,
             columns=[self._to_column_summary(row) for row in column_rows],

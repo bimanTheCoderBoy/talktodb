@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from pydantic import BaseModel, Field
 
 
@@ -15,8 +13,6 @@ class CatalogRelationInfo(BaseModel):
     related_tables: list[str]
     columns_attached: list[str]
     notes: list[str]
-    created_at: datetime
-    updated_at: datetime
 
 
 class CatalogRelationLookupResult(BaseModel):

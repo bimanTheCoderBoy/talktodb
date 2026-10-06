@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from pydantic import BaseModel, Field
 
 
@@ -11,8 +9,6 @@ class CatalogColumnSummary(BaseModel):
     data_type: str
     description: str
     example_use_cases: str
-    # created_at: datetime
-    # updated_at: datetime
 
 
 class CatalogTableInfo(BaseModel):
@@ -21,8 +17,6 @@ class CatalogTableInfo(BaseModel):
     primary_key_columns: list[str]
     important_columns: list[str] | None
     notes: list[str]
-    created_at: datetime
-    updated_at: datetime
 
 
 class CatalogTableLookupResult(BaseModel):

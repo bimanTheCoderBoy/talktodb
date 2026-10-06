@@ -76,6 +76,4 @@ class CatalogRelationRepository(ICatalogRelationRepository):
             related_tables=list(row.related_tables or []),
             columns_attached=list(row.columns_attached or []),
             notes=list(row.notes or []),
-            created_at=row.created_at,
-            updated_at=row.updated_at,
         )

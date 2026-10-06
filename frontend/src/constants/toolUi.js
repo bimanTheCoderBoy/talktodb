@@ -9,7 +9,12 @@ export const TOOL_DISPLAY_NAME_BY_NAME = {
   ask_human: "User Calrification",
   doc_retrieval_tool: "Document Retrieval",
 
-  
+  // Computer catalog / query tools
+  get_database_table: "Database Table",
+  get_database_column: "Database Column",
+  get_database_relation: "Database Relation",
+  search_database_context: "Database Context Search",
+  run_db_query: "Database Query",
 
   // DB agent tools
   asset_db_rag_tool: "Asset RAG Search",

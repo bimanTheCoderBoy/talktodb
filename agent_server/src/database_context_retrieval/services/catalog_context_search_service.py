@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from collections import defaultdict
 
 import httpx
@@ -25,6 +24,32 @@ from database_context_retrieval.domain.schema.catalog_table import CatalogTableL
 from database_context_retrieval.services.catalog_table_service import CatalogTableService
 
 
+def _unique_tables_for_enrichment(
+    column_hits: list[CatalogRetrievalColumnHit],
+    *,
+    max_tables: int,
+) -> list[tuple[str, list[CatalogRetrievalColumnHit]]]:
+    """Rank unique tables by best column score; cap only how many tables we enrich.
+
+    All ``column_hits`` are kept on the result unchanged — this only selects which
+    tables receive a config-DB ``get_table_info`` lookup.
+    """
+    hits_by_table: dict[str, list[CatalogRetrievalColumnHit]] = defaultdict(list)
+    best_score_by_table: dict[str, float] = {}
+    for hit in column_hits:
+        hits_by_table[hit.table_name].append(hit)
+        prev = best_score_by_table.get(hit.table_name, float("-inf"))
+        best_score_by_table[hit.table_name] = max(prev, hit.value)
+
+    ranked_names = sorted(
+        best_score_by_table.keys(),
+        key=lambda name: best_score_by_table[name],
+        reverse=True,
+    )
+    capped_names = ranked_names[:max_tables]
+    return [(name, hits_by_table[name]) for name in capped_names]
+
+
 class CatalogContextSearchService:
     def __init__(self, table_service: CatalogTableService) -> None:
         self._table_service = table_service
@@ -39,16 +64,10 @@ class CatalogContextSearchService:
         if not column_hits:
             return CatalogContextSearchResult(query=normalized, column_hits=[])
 
-        grouped: dict[str, list[CatalogRetrievalColumnHit]] = defaultdict(list)
-        for hit in column_hits:
-            grouped[hit.table_name].append(hit)
-
-        ranked_tables = sorted(
-            grouped.items(),
-            key=lambda item: max(col.value for col in item[1]),
-            reverse=True,
+        tables_to_enrich = _unique_tables_for_enrichment(
+            column_hits,
+            max_tables=CATALOG_CONTEXT_MAX_TABLES,
         )
-        selected = ranked_tables[:CATALOG_CONTEXT_MAX_TABLES]
 
         async def enrich_table(
             table_name: str,
@@ -75,9 +94,10 @@ class CatalogContextSearchService:
                 lookup=lookup,
             )
 
-        tables = await asyncio.gather(
-            *(enrich_table(name, matched) for name, matched in selected)
-        )
+        # One SQLAlchemy AsyncSession per tool call — enrich sequentially (no concurrent session use).
+        tables: list[CatalogTableEnrichedContext] = []
+        for name, matched in tables_to_enrich:
+            tables.append(await enrich_table(name, matched))
 
         return CatalogContextSearchResult(
             query=normalized,

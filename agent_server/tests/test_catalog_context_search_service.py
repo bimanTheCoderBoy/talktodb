@@ -14,6 +14,7 @@ from database_context_retrieval.domain.schema.catalog_context_search import Cata
 from database_context_retrieval.domain.schema.catalog_table import CatalogTableLookupResult
 from database_context_retrieval.services.catalog_context_search_service import (
     CatalogContextSearchService,
+    _unique_tables_for_enrichment,
 )
 
 
@@ -129,6 +130,47 @@ async def test_search_partial_failure_when_table_lookup_raises():
     assert by_name["good"].lookup.found is True
     assert by_name["bad"].lookup.success is False
     assert "db down" in (by_name["bad"].lookup.error or "")
+
+
+@pytest.mark.asyncio
+async def test_search_keeps_all_column_hits_but_caps_table_enrichment(monkeypatch):
+    monkeypatch.setattr(
+        "database_context_retrieval.services.catalog_context_search_service.CATALOG_CONTEXT_MAX_TABLES",
+        2,
+    )
+    table_service = AsyncMock()
+    table_service.get_table_info.side_effect = lambda name, **_: CatalogTableLookupResult(
+        found=True,
+        queried_name=name,
+    )
+    service = CatalogContextSearchService(table_service)
+    hits = [
+        _hit(column_id="1", table_name="t1", column_name="a", value=0.9),
+        _hit(column_id="2", table_name="t2", column_name="b", value=0.8),
+        _hit(column_id="3", table_name="t3", column_name="c", value=0.7),
+    ]
+    service._fetch_catalog_columns = AsyncMock(return_value=hits)
+
+    result = await service.search("many tables")
+
+    assert len(result.column_hits) == 3
+    assert {h.table_name for h in result.column_hits} == {"t1", "t2", "t3"}
+    assert len(result.tables) == 2
+    assert [t.table_name for t in result.tables] == ["t1", "t2"]
+    assert table_service.get_table_info.await_count == 2
+
+
+def test_unique_tables_for_enrichment_preserves_all_hits_per_table():
+    hits = [
+        _hit(column_id="1", table_name="t1", column_name="a", value=0.5),
+        _hit(column_id="2", table_name="t1", column_name="b", value=0.3),
+        _hit(column_id="3", table_name="t2", column_name="c", value=0.9),
+    ]
+    selected = _unique_tables_for_enrichment(hits, max_tables=5)
+    assert selected[0][0] == "t2"
+    assert len(selected[0][1]) == 1
+    t1_pair = next(pair for pair in selected if pair[0] == "t1")
+    assert len(t1_pair[1]) == 2
 
 
 @pytest.mark.asyncio
