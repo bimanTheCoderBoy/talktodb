@@ -10,6 +10,8 @@ TOOL_GET_DATABASE_COLUMN = "get_database_column"
 TOOL_GET_DATABASE_RELATION = "get_database_relation"
 TOOL_SEARCH_DATABASE_CONTEXT = "search_database_context"
 TOOL_RUN_DB_QUERY = "run_db_query"
+TOOL_GET_DYNAMIC_TOOL = "get_dynamic_tool"
+TOOL_CALL_DYNAMIC_TOOL = "call_dynamic_tool"
 
 MAX_TOOL_RESULT_SIZE_CHAR = 10000
 TRUNCATION_MARKER = "...TRUNCATED_DUE_TO_HUGE_SIZE"
@@ -185,6 +187,10 @@ def _compact_llm_run_db_query(
     return "".join(parts)
 
 
+def _compact_llm_json_passthrough(data: dict[str, Any]) -> dict[str, Any]:
+    return data
+
+
 def _format_ui_json_block(data: dict[str, Any], *, tool_args: dict[str, Any] | None) -> str:
     return "```json\n" + json.dumps(data, indent=2, default=str) + "\n```"
 
@@ -247,6 +253,8 @@ _LLM_FORMATTERS: dict[str, Callable[..., str | dict[str, Any]]] = {
     TOOL_GET_DATABASE_COLUMN: _compact_llm_get_database_column,
     TOOL_GET_DATABASE_RELATION: _compact_llm_get_database_relation,
     TOOL_SEARCH_DATABASE_CONTEXT: _compact_llm_search_database_context,
+    TOOL_GET_DYNAMIC_TOOL: _compact_llm_json_passthrough,
+    TOOL_CALL_DYNAMIC_TOOL: _compact_llm_json_passthrough,
 }
 
 _UI_FORMATTERS: dict[str, Callable[..., str]] = {
@@ -255,6 +263,8 @@ _UI_FORMATTERS: dict[str, Callable[..., str]] = {
     TOOL_GET_DATABASE_RELATION: _format_ui_json_block,
     TOOL_SEARCH_DATABASE_CONTEXT: _format_ui_json_block,
     TOOL_RUN_DB_QUERY: _format_ui_run_db_query,
+    TOOL_GET_DYNAMIC_TOOL: _format_ui_json_block,
+    TOOL_CALL_DYNAMIC_TOOL: _format_ui_json_block,
 }
 
 

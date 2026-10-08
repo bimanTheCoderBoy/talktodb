@@ -31,11 +31,13 @@ from shared_server_libs.agent_db_access.domain.exception.scope_not_configured im
     ScopeNotConfiguredError,
 )
 from shared_server_libs.agent_db_access.domain.schema.query_result import QueryResult
+from computer.utils.save_sql_query_result_to_file import save_query_result_to_file
+import asyncio
 
 logger = get_computer_logger(__name__)
 
 _RUN_DB_QUERY_TOOL_CACHE: dict[tuple[str, str], BaseTool] = {}
-
+QUERY_RESULT_FILE_PATH: str = "/output/query_results/"
 
 class GetDatabaseColumnInput(BaseModel):
     table_name: str = Field(description="Exact catalog table name that owns the column.")
@@ -72,6 +74,10 @@ class RunDbQueryInput(BaseModel):
     params: dict[str, Any] | None = Field(
         default=None,
         description="Optional named bind parameters for the query.",
+    )
+    output_file_path: str | None = Field(
+        default=None,
+        description=f"Optional file path to save the query result to. If provided, the result will be saved to the that nammed CSV file in {QUERY_RESULT_FILE_PATH} folder. ex: 'azimuth_001' will save to 'output/query_results/azimuth_001.csv'",
     )
 
 
@@ -246,6 +252,7 @@ def _make_run_db_query_tool(project_name: str, user_email: str) -> BaseTool:
     async def run_db_query(
         query: str,
         params: dict[str, Any] | None = None,
+        output_file_path: str | None = None,
     ) -> str:
         """
         Execute SQL on the user's current project database with row-level scope applied.
@@ -279,7 +286,6 @@ def _make_run_db_query_tool(project_name: str, user_email: str) -> BaseTool:
                         success=False,
                         error=f"Query failed EXPLAIN validation and was not executed: {plan.error}",
                     ).model_dump_json()
-
                 result = await repository.run_query(
                     normalized_project,
                     normalized_email,
@@ -287,6 +293,18 @@ def _make_run_db_query_tool(project_name: str, user_email: str) -> BaseTool:
                     params,
                     use_rls=True,
                 )
+                # save the query result to the file if output_file_path is provided
+                if output_file_path:
+                    file_path = f"{QUERY_RESULT_FILE_PATH}{output_file_path}.csv"
+                    save_result = await asyncio.to_thread(save_query_result_to_file, normalized_email, file_path, result)
+                    if save_result.error:
+                        logger.warning("[DB_CONTEXT] run_db_query failed to save result to file: %s", save_result.error)
+                        return QueryResult(success=False, error=f"Failed to save result to file: {save_result.error}").model_dump_json()
+
+
+                return result.model_dump_json()
+
+
         except ScopeNotConfiguredError as exc:
             logger.warning("[DB_CONTEXT] run_db_query scope not configured: %s", exc)
             result = QueryResult(success=False, error=str(exc))
