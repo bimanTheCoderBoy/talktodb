@@ -95,7 +95,7 @@ REM  PRE-FLIGHT — Verify dist/ folders exist (local-build.bat must run first)
 REM =====================================================================
 echo [pre-flight] Checking that wheel artifacts exist...
 set "PREFLIGHT_OK=1"
-for %%D in (asp_server agent_server pipeline download_service rag_retrieval_server) do (
+for %%D in (agent_server rag_retrieval_server) do (
     if not exist "%REPO%\%%D\dist\requirements.txt" (
         echo        MISSING: %%D\dist\requirements.txt
         set "PREFLIGHT_OK=0"

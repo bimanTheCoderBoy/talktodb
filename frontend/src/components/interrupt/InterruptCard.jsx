@@ -2,7 +2,6 @@ import React from "react";
 import { LazyMDResponse } from "@/components/ui/shadcn-io/ai/lazy-md-response";
 import { Button } from "@/components/ui/button";
 import { CircleHelp, ShieldCheck, ShieldX } from "lucide-react";
-import { trimLargeTables } from "@/services/downloadService.js";
 
 const HUMAN_INTERRUPT_TYPES = ["ASK_HUMAN", "ASK_HUMAN_BINARY"];
 
@@ -22,19 +21,19 @@ export default function InterruptCard({
   }
 
   const formattedContent = stringifyInterruptContent(content);
-  const trimmedContent = trimLargeTables(formattedContent,200);
+  const trimmedContent = formattedContent.length > 12000 ? `${formattedContent.slice(0, 12000)}…` : formattedContent;
   const isBinaryPrompt = type === "ASK_HUMAN_BINARY";
   const promptTitle = isBinaryPrompt ? "Approval Required" : "Agent Asking You";
 
   return (
-    <div className="relative max-h-[500px] overflow-y-scroll rounded-xl border border-gray-300 dark:border-teoco-real-blue/30 bg-gray-100 dark:bg-teoco-navy-blue/40 p-4 shadow-lg shadow-black/5 dark:shadow-black/20">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gray-200/50 dark:from-teoco-real-blue/10 via-transparent to-transparent" />
+    <div className="relative max-h-[500px] overflow-y-scroll rounded-xl border border-border bg-secondary/80 p-4 shadow-lg shadow-black/5 dark:shadow-black/20">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
       <div className="relative flex items-start gap-3 min-w-0">
-        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-gray-200 dark:bg-teoco-real-blue/20 ring-1 ring-gray-300 dark:ring-teoco-real-blue/30">
+        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 ring-1 ring-primary/25">
           {isBinaryPrompt ? (
-            <ShieldCheck className="h-4 w-4 text-gray-600 dark:text-teoco-real-blue" />
+            <ShieldCheck className="h-4 w-4 text-primary" />
           ) : (
-            <CircleHelp className="h-4 w-4 text-gray-600 dark:text-teoco-real-blue" />
+            <CircleHelp className="h-4 w-4 text-primary" />
           )}
         </div>
 

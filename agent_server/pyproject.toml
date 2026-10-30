@@ -21,13 +21,6 @@ dependencies = [
     "asyncpg==0.31.0",
     "httpx==0.28.1",
     "aiofiles==25.1.0",
-    "numpy==2.3.5",
-    "pandas==2.3.3",
-    "geopandas==1.1.4",
-    "rasterio==1.5.1",
-    "numba==0.67.0",
-    "shapely==2.1.2",
-    "Pillow==12.3.0",
     "python-jose==3.5.0",
     "cryptography==50.0.0",
     "fastapi==0.141.1",
@@ -42,7 +35,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
-performance = ["numba>=0.58.0"]
 
 [build-system]
 requires = ["setuptools>=73.0.0", "wheel"]

@@ -2,14 +2,11 @@
   "$schema": "https://langgra.ph/schema.json",
   "dependencies": ["."],
   "graphs": {
-    "agent": "./src/agent/graph.py:graph",
-    "db_agent": "./src/db_agent_v2/graph.py:graph",
     "computer": "./src/computer/graph.py:graph"
   },
   "http": {
     "app": "./src/api/main.py:app"
   },
-  
   "env": ".env",
   "image_distro": "debian"
 }

@@ -1,26 +1,26 @@
 import React, { useEffect, useRef } from 'react';
 import mermaid from 'mermaid';
 
-// Initialize mermaid with configuration matching TEOCO theme
+// Mermaid theme aligned with talkToDB (teal / slate)
 mermaid.initialize({
   startOnLoad: false,
   theme: 'dark',
   securityLevel: 'loose',
   themeVariables: {
-    primaryColor: '#1d4a91',
-    primaryTextColor: '#fff',
-    primaryBorderColor: '#1d4a91',
-    lineColor: '#1d4a91',
-    secondaryColor: '#0d172b',
-    tertiaryColor: '#1d4a91',
-    background: '#0d172b',
-    mainBkg: '#1d4a91',
-    secondBkg: '#0d172b',
-    textColor: '#fff',
-    nodeBorder: '#1d4a91',
-    clusterBkg: '#0d172b',
-    clusterBorder: '#1d4a91',
-    edgeLabelBackground: '#0d172b',
+    primaryColor: '#0d9488',
+    primaryTextColor: '#f0fdfa',
+    primaryBorderColor: '#14b8a6',
+    lineColor: '#2dd4bf',
+    secondaryColor: '#141a22',
+    tertiaryColor: '#134e4a',
+    background: '#0c1015',
+    mainBkg: '#0d9488',
+    secondBkg: '#141a22',
+    textColor: '#e2e8f0',
+    nodeBorder: '#14b8a6',
+    clusterBkg: '#141a22',
+    clusterBorder: '#2dd4bf',
+    edgeLabelBackground: '#0c1015',
   }
 });
 
@@ -60,7 +60,7 @@ export const MermaidDiagram = ({ chart, className = '' }) => {
   }, [chart]);
 
   return (
-    <div className={`my-4 p-4 bg-slate-900/50 border border-teoco-real-blue/30 rounded-lg overflow-x-auto ${className}`}>
+    <div className={`my-4 p-4 bg-card/80 border border-border rounded-lg overflow-x-auto ${className}`}>
       <div ref={ref} className="flex justify-center items-center" />
     </div>
   );

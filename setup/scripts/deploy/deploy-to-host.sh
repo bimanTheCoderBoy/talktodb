@@ -137,7 +137,7 @@ set_env() {
 # =====================================================================
 echo "[pre-flight] Checking that wheel artifacts exist..."
 PREFLIGHT_OK=1
-for d in asp_server agent_server pipeline download_service rag_retrieval_server; do
+for d in agent_server rag_retrieval_server; do
   if [[ ! -f "$REPO/$d/dist/requirements.txt" ]]; then
     echo "       MISSING: $d/dist/requirements.txt"
     PREFLIGHT_OK=0

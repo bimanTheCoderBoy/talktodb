@@ -7,10 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.auth_middleware import AuthMiddleware
-from api.routers.sites_cells_router import router as sites_cells_router
-from api.routers.project_router import router as project_router
 from api.routers.user_config_router import router as user_config_router
-from api.routers.audit_rules_router import router as audit_rules_router
 from openinference.instrumentation.langchain import LangChainInstrumentor
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -92,10 +89,7 @@ app.add_middleware(
 
 # ============== Routers ==============
 
-app.include_router(sites_cells_router)
-app.include_router(project_router)
 app.include_router(user_config_router)
-app.include_router(audit_rules_router)
 
 
 # ============== Health ==============

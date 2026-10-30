@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Loader2Icon, SendIcon, SquareIcon, XIcon } from 'lucide-react';
+import { ArrowUp, Loader2Icon, SquareIcon, XIcon } from 'lucide-react';
 import { Children } from 'react';
 
 
@@ -36,7 +36,7 @@ export const PromptInput = ({
 }) => (
   <form
     className={cn(
-      'w-full divide-y overflow-hidden rounded-xl border bg-background shadow-sm',
+      'flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-full border bg-card px-4 py-1.5 shadow-lg',
       className
     )}
     {...props} />
@@ -68,10 +68,11 @@ export const PromptInputTextarea = ({
 
   return (
     <Textarea
+      rows={1}
       className={cn(
-        'w-full resize-none rounded-none border-none p-3 shadow-none outline-none ring-0',
-        'field-sizing-content max-h-[6lh] bg-transparent dark:bg-transparent',
-        'focus-visible:ring-0',
+        'min-h-0 h-10 max-h-28 flex-1 resize-none rounded-none border-none bg-transparent px-0 py-2 shadow-none outline-none ring-0',
+        'text-sm leading-normal field-sizing-content',
+        'focus-visible:ring-0 focus-visible:ring-offset-0',
         className
       )}
       name="message"
@@ -89,7 +90,7 @@ export const PromptInputToolbar = ({
   ...props
 }) => (
   <div
-    className={cn('flex items-center justify-between p-1', className)}
+    className={cn('flex shrink-0 items-center p-0', className)}
     {...props} />
 );
 
@@ -138,20 +139,23 @@ export const PromptInputSubmit = ({
   children,
   ...props
 }) => {
-  let Icon = <SendIcon className="size-4" />;
+  let Icon = <ArrowUp className="size-4" strokeWidth={2.5} />;
 
   if (status === 'submitted') {
     Icon = <Loader2Icon className="size-4 animate-spin" />;
-    // Icon = <TeocoPromptInputLoader/>;
   } else if (status === 'streaming') {
-    Icon = <SquareIcon className="size-4" />;
+    Icon = <SquareIcon className="size-3.5" />;
   } else if (status === 'error') {
     Icon = <XIcon className="size-4" />;
   }
 
   return (
     <Button
-      className={cn('gap-1.5 rounded-lg', className) + `${status === 'submitted' ? ' hover:bg-red-400/30 duration-200 transition-all' : ''}`}
+      className={cn(
+        'size-9 shrink-0 rounded-full p-0',
+        status === 'submitted' && 'hover:bg-red-400/30 duration-200 transition-all',
+        className
+      )}
       size={size}
       type="submit"
       variant={variant}

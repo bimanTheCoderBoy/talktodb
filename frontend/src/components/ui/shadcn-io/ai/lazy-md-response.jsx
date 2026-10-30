@@ -1,7 +1,6 @@
 'use client';
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { serveImageUrl } from '@/lib/docRagAssetServeUrl';
 import { CodeBlock, CodeBlockCopyButton } from './code-block';
 import { MermaidDiagram } from './mermaid-diagram';
 import 'katex/dist/katex.min.css';
@@ -158,7 +157,7 @@ const renderHastNode = (node, index = 0) => {
       case 'img': {
         let src = props.src || '';
         if (!src.startsWith('http') && !src.startsWith('/')) {
-          src = serveImageUrl(src);
+          src = `/${src.replace(/^\.?\//, '')}`;
         }
         return (
           <img 

@@ -1,1 +1,0 @@
-"""GDL XLSX generation."""

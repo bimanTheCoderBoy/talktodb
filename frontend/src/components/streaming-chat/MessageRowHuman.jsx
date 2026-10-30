@@ -6,8 +6,8 @@ import { User } from "lucide-react";
 const MessageRowHuman = React.memo(function MessageRowHuman({ content }) {
   return (
     <Message from="user" className="w-full min-w-0">
-      <div className="size-8 rounded-full bg-teoco-real-blue flex items-center justify-center ring-2 ring-teoco-real-blue/30">
-        <User className="w-5 h-5 text-white" />
+      <div className="size-8 rounded-full bg-primary flex items-center justify-center ring-2 ring-primary/30">
+        <User className="w-5 h-5 text-primary-foreground" />
       </div>
       <MessageContent className="min-w-0">
         <MDResponse className="min-w-0 wrap-anywhere">

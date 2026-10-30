@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import TeocoLoader from "../TEOCOLoading";
+import AppLoader from "../AppLoader";
 import { THINKING_WORDS } from "./thinkingWords";
 
 const LoadingRow = React.memo(function LoadingRow() {
@@ -22,7 +22,7 @@ const LoadingRow = React.memo(function LoadingRow() {
 
   return (
     <div className="w-full max-w-6xl min-w-0 mx-auto flex items-center gap-3 py-2 px-1">
-      <TeocoLoader />
+      <AppLoader />
       <span
         className="text-sm font-medium text-muted-foreground transition-opacity duration-200"
         style={{ opacity: fade ? 1 : 0 }}

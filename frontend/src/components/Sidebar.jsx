@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useTheme } from "next-themes";
-import { Plus, RefreshCw, Sparkles, Search, MonitorCog } from "lucide-react";
+import { Plus, RefreshCw, Search } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
-import logoRaNora from "@/asset/raNora-icon-coloured-text.png";
+import BrandMark from "./BrandMark";
 import { ThemeToggle } from "./ThemeToggle";
 import UserCard from "@/auth/UserCard";
-import keycloak from "@/keycloak";
-import { useProjectContext } from "../context/ProjectContext";
 import ChatSearchModal from "./ChatSearchModal";
 import { useThreads } from "../hooks/useThreads";
 import ThreadList from "./Sidebar/ThreadList";
@@ -21,9 +19,6 @@ import CollapsedSidebar from "./Sidebar/CollapsedSidebar";
 export default function SidebarApp({ sidebarOpen, setSidebarOpen, currentThread, setCurrentThread, threadTitle, addNewThread, threads, setThreads, sidebarWidth }) {
   const { theme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
-  const isAdmin = keycloak.tokenParsed?.realm_access?.roles.includes("CONFIG_MANAGEMENT");
-  const projectName = useProjectContext().projectName;
-
   const {
     loading,
     fetchThreads,
@@ -45,7 +40,7 @@ export default function SidebarApp({ sidebarOpen, setSidebarOpen, currentThread,
     togglePinnedCollapsed,
     toggleChatsCollapsed,
     toggleChatsExpanded,
-  } = useThreads({ projectName, threadTitle, threads, setThreads, currentThread, setCurrentThread });
+  } = useThreads({ threadTitle, threads, setThreads, currentThread, setCurrentThread });
 
   // Ctrl/Cmd+K opens search
   useEffect(() => {
@@ -70,13 +65,7 @@ export default function SidebarApp({ sidebarOpen, setSidebarOpen, currentThread,
               
               {/* Brand */}
               <SidebarGroup className="flex-shrink-0 border-b border-border py-5 px-4">
-                <div className="flex flex-col items-center gap-3">
-                  <img src={logoRaNora} alt="" className="h-12 w-auto object-contain dark:drop-shadow-md" />
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 rounded-full">
-                    <span className="w-1.5 h-1.5 bg-amber-500 dark:bg-amber-400 rounded-full animate-pulse" />
-                    raNora v1.5.2
-                  </span>
-                </div>
+                <BrandMark size="md" showTagline />
               </SidebarGroup>
 
               {/* Chat header */}
@@ -137,22 +126,11 @@ export default function SidebarApp({ sidebarOpen, setSidebarOpen, currentThread,
             {/* Footer */}
             <div className="flex flex-col justify-between px-2 py-1.5 border-t border-sidebar-border bg-sidebar z-[60]">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-primary/60" />
-                  <p className="text-muted-foreground text-[10px]">
-                    Powered by{" "}
-                    <a href="https://www.teoco.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 font-medium transition-colors">
-                      TEOCO
-                    </a>
-                  </p>
-                </div>
+                <p className="text-muted-foreground text-[10px] font-medium tracking-wide">
+                  talkToDB
+                </p>
                 <div className="flex items-center gap-2">
                   <ThemeToggle />
-                  {isAdmin && (
-                    <button onClick={() => { window.location.href = "/admin/set-up/config"; }} title="Configure project for users (admin only)" className="p-1 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 cursor-pointer">
-                      <MonitorCog className="w-6 h-6" />
-                    </button>
-                  )}
                   <UserCard />
                 </div>
               </div>

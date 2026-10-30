@@ -55,9 +55,6 @@ html, body, #root {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-teoco-navy-blue: #0d172b;
-  --color-teoco-real-blue: #1d4a91;
-  --color-teoco-background: #0d172b;
 }
 
 @theme {
@@ -75,81 +72,78 @@ html, body, #root {
 }
 
 :root {
-  
-    
-  --cursor-color: #000000; 
-  
+  --cursor-color: #0f172a;
   --radius: 0.625rem;
   color-scheme: light;
-  accent-color: oklch(0.205 0 0);
-  --background: oklch(0.95 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  accent-color: #0d9488;
+  --background: #f4f7f6;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0d9488;
+  --primary-foreground: #f0fdfa;
+  --secondary: #ecfdf5;
+  --secondary-foreground: #134e4a;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --accent: #ccfbf1;
+  --accent-foreground: #115e59;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0); 
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --ring: #14b8a6;
+  --chart-1: #0d9488;
+  --chart-2: #0891b2;
+  --chart-3: #6366f1;
+  --chart-4: #f59e0b;
+  --chart-5: #ec4899;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #0d9488;
+  --sidebar-primary-foreground: #f0fdfa;
+  --sidebar-accent: #ecfdf5;
+  --sidebar-accent-foreground: #134e4a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #14b8a6;
 }
 
 .dark {
-  --cursor-color: #ffffff; 
+  --cursor-color: #f0fdfa;
   color-scheme: dark;
-  accent-color: #1d4a91;
-  --background: #1e293b;
-  --foreground: oklch(0.985 0 0);
-  --card: #0d172b;
-  --card-foreground: oklch(0.985 0 0);
-  --popover: #0d172b;
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: #1d4a91;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: #152238;
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: #152238;
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: #1d4a91;
-  --accent-foreground: oklch(0.985 0 0);
+  accent-color: #2dd4bf;
+  --background: #0c1015;
+  --foreground: #e2e8f0;
+  --card: #141a22;
+  --card-foreground: #e2e8f0;
+  --popover: #141a22;
+  --popover-foreground: #e2e8f0;
+  --primary: #2dd4bf;
+  --primary-foreground: #042f2e;
+  --secondary: #1a2332;
+  --secondary-foreground: #cbd5e1;
+  --muted: #1a2332;
+  --muted-foreground: #94a3b8;
+  --accent: #134e4a;
+  --accent-foreground: #99f6e4;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(29, 74, 145, 0.2);
-  --input: rgba(29, 74, 145, 0.15);
-  --ring: #1d4a91;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #0d172b;
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: #1d4a91;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: #152238;
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: rgba(29, 74, 145, 0.2);
-  --sidebar-ring: #1d4a91; 
+  --border: rgba(45, 212, 191, 0.15);
+  --input: rgba(45, 212, 191, 0.12);
+  --ring: #2dd4bf;
+  --chart-1: #2dd4bf;
+  --chart-2: #22d3ee;
+  --chart-3: #818cf8;
+  --chart-4: #fbbf24;
+  --chart-5: #f472b6;
+  --sidebar: #0f1419;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #042f2e;
+  --sidebar-accent: #1a2332;
+  --sidebar-accent-foreground: #cbd5e1;
+  --sidebar-border: rgba(45, 212, 191, 0.12);
+  --sidebar-ring: #2dd4bf;
 }
 * {
   cursor: url("/dark_cursor.png") 8 8, auto;
@@ -165,7 +159,7 @@ html, body, #root {
   } 
 }
 
-/* TEOCO Branding - Custom scrollbar */
+/* Custom scrollbar */
 /* THEME: hardcoded colors → CSS variables so scrollbar adapts to light/dark */
 ::-webkit-scrollbar {
   width: 3px;
@@ -209,13 +203,13 @@ html, body, #root {
   display: none;
 }
 
-/* TEOCO Branding - Message box placeholder */
+/* Message box placeholder */
 /* THEME: hardcoded #AAAAAA → var(--muted-foreground) so placeholder adapts */
 form[class*="rounded-xl"] textarea::placeholder {
   color: var(--muted-foreground) !important;
 }
 
-/* TEOCO Branding - Message bubbles */
+/* Message bubbles */
 /* THEME: hardcoded colors → CSS variables so chat bubbles adapt to light/dark */
 .group.is-user > div {
   /* was: #1d4a91, white */
@@ -230,7 +224,7 @@ form[class*="rounded-xl"] textarea::placeholder {
   border: 1px solid var(--border);
 }
 
-/* TEOCO Branding - Conversation scroll button */
+/* Conversation scroll button */
 /* THEME: hardcoded colors → CSS variables so scroll button adapts to light/dark */
 button[data-slot="button"]:has(svg[class*="ArrowDownIcon"]) {
   /* was: #1d4a91, white */
@@ -245,7 +239,7 @@ button[data-slot="button"]:has(svg[class*="ArrowDownIcon"]):hover {
   border-color: var(--primary) !important;
 }
 
-/* TEOCO Branding - Select dropdown */
+/* Select dropdown */
 /* THEME: hardcoded colors → CSS variables so dropdowns adapt to light/dark */
 [data-slot="select-content"] {
   /* was: #0d172b */
@@ -272,14 +266,14 @@ button[data-slot="button"]:has(svg[class*="ArrowDownIcon"]):hover {
 }
 
 /* ========================================
-   React-Toastify (TEOCO theme overrides)
+   React-Toastify (app theme)
    ======================================== */
-.teoco-toast-container.Toastify__toast-container {
+.app-toast-container.Toastify__toast-container {
   width: min(420px, calc(100vw - 24px));
 }
 
 /* THEME: toast background/text → CSS variables so toasts adapt to light/dark */
-.teoco-toast.Toastify__toast {
+.app-toast.Toastify__toast {
   /* was: rgba(13, 23, 43, 0.95), #e5e7eb */
   background: var(--card) !important;
   color: var(--card-foreground) !important;
@@ -289,14 +283,14 @@ button[data-slot="button"]:has(svg[class*="ArrowDownIcon"]):hover {
   backdrop-filter: blur(10px);
 }
 
-.teoco-toast-body.Toastify__toast-body {
+.app-toast-body.Toastify__toast-body {
   font-family: inherit;
   padding: 4px 6px !important;
   margin: 0 !important;
 }
 
-.teoco-toast-progress.Toastify__progress-bar {
-  background: linear-gradient(90deg, #1d4a91, #2a5fb3) !important;
+.app-toast-progress.Toastify__progress-bar {
+  background: linear-gradient(90deg, var(--primary), var(--ring)) !important;
 }
 
 /* THEME: close button text → CSS variables */
@@ -311,11 +305,11 @@ button[data-slot="button"]:has(svg[class*="ArrowDownIcon"]):hover {
   color: var(--foreground) !important;
 }
 
-.Toastify__toast--success .teoco-toast-progress.Toastify__progress-bar {
+.Toastify__toast--success .app-toast-progress.Toastify__progress-bar {
   background: linear-gradient(90deg, #10b981, #34d399) !important;
 }
 
-.Toastify__toast--error .teoco-toast-progress.Toastify__progress-bar {
+.Toastify__toast--error .app-toast-progress.Toastify__progress-bar {
   background: linear-gradient(90deg, #ef4444, #f87171) !important;
 }
 
@@ -323,7 +317,7 @@ button[data-slot="button"]:has(svg[class*="ArrowDownIcon"]):hover {
    2D Map Component Styles (RSRP Viewer)
    ======================================== */
 
-/* Scoped CSS variables for map component - TEOCO branded */
+/* Scoped CSS variables for map component */
 .map-2d-wrapper {
   --bg-dark: var(--background);
   --bg-panel: var(--card);

@@ -56,8 +56,8 @@ function UserCard() {
         title="User Settings"
         className="flex  items-center gap-2 p-1 rounded-full bg-secondary dark:bg-slate-800/50 border border-border dark:border-slate-700/50 hover:bg-accent dark:hover:bg-slate-700/50 hover:border-border dark:hover:border-slate-600/50 transition-all duration-200 cursor-pointer group"
       >
-        <Avatar className="h-8 w-8 border-2 border-primary/30 dark:border-teoco-real-blue/50 group-hover:border-primary/60 dark:group-hover:border-teoco-real-blue transition-colors" onClick={() => setIsOpen(!isOpen)}>
-          <AvatarFallback className="bg-primary dark:bg-gradient-to-br dark:from-teoco-real-blue dark:to-teoco-navy-blue text-primary-foreground dark:text-white text-xs font-semibold">
+        <Avatar className="h-8 w-8 border-2 border-primary/30 group-hover:border-primary/60 transition-colors" onClick={() => setIsOpen(!isOpen)}>
+          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
             {getInitials()}
           </AvatarFallback>
         </Avatar>
@@ -70,7 +70,7 @@ function UserCard() {
       {isOpen && (
         <div className="absolute bottom-full left-0 mb-2 w-72 bg-popover dark:bg-slate-900 border border-border dark:border-slate-700/50 rounded-xl shadow-2xl shadow-black/50 overflow-visible z-[100] animate-in fade-in slide-in-from-bottom-2 duration-200">
           {/* Header with gradient */}
-          <div className="bg-primary dark:bg-gradient-to-r dark:from-teoco-real-blue dark:to-teoco-navy-blue p-4 rounded-xl">
+          <div className="bg-primary p-4 rounded-xl">
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12 border-2 border-primary-foreground/20 dark:border-white/20">
                 <AvatarFallback className="bg-primary-foreground/10 dark:bg-white/10 text-primary-foreground dark:text-white text-lg font-semibold">
@@ -92,7 +92,7 @@ function UserCard() {
           <div className="p-3 space-y-1">
             {user?.email && (
               <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary dark:bg-slate-800/50 border border-border dark:border-slate-700/30">
-                <Mail className="w-4 h-4 text-teoco-real-blue flex-shrink-0" />
+                <Mail className="w-4 h-4 text-primary flex-shrink-0" />
                 <span className="text-muted-foreground dark:text-gray-300 text-sm truncate">{user.email}</span>
               </div>
             )}

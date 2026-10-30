@@ -1,7 +1,6 @@
 name: aana_core_services
 
 services:
-  # Database Service (PostgreSQL with pgvector)
   postgres:
     image: postgis/postgis:16-3.4
     container_name: app_postgres
@@ -23,7 +22,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis Service (Broker & Cache)
   redis:
     image: redis:7-alpine
     container_name: app_redis
@@ -40,7 +38,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # Backend Service (LangGraph Agent) - Internal only, accessed via frontend nginx
   agent_server:
     build:
       context: ./agent_server
@@ -58,10 +55,10 @@ services:
         condition: service_healthy
     environment:
       - REDIS_URI=${REDIS_URI:-redis://redis:6379}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - POSTGRES_URI=${POSTGRES_URI:-postgres://csv_user:csv_password@postgres:5432/langgraph_data?sslmode=disable}
     volumes:
       - ${TEOCO_DATA_DIR}:/app/teoco_data_store
-      - network_bil_volume:/mnt/mapdata:ro
     env_file:
       - ./setup/prod_envs/agent_server/.env
     extra_hosts:
@@ -76,121 +73,14 @@ services:
       retries: 3
       start_period: 10s
 
-  # Download Service API (PDF / MD / CSV)
-  download_api:
-    build:
-      context: ./download_service
-      dockerfile: Dockerfile
-    container_name: download_api
-    restart: unless-stopped
-    ports:
-      - "${DOWNLOAD_API_PORT:-8000}:8000"
-    depends_on:
-      redis:
-        condition: service_healthy
-    environment:
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
-    command: uvicorn download_app.main:app --host 0.0.0.0 --port 8000
-    networks:
-      - app_network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-  # Download Worker Service (Fast tasks)
-  download_worker:
-    build:
-      context: ./download_service
-      dockerfile: Dockerfile
-    container_name: download_worker
-    restart: unless-stopped
-    depends_on:
-      redis:
-        condition: service_healthy
-      download_api:
-        condition: service_started
-    environment:
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
-    command: celery -A download_app.tasks.celery_tasks:celery_app worker -Q download_fast --loglevel=info --concurrency=4
-    networks:
-      - app_network
-
-  # ACSS Backend API Service
-  acss_api:
-    build:
-      context: ./asp_server
-      dockerfile: Dockerfile
-    container_name: acss_api
-    restart: unless-stopped
-    ports:
-      - "${ACSS_PORT:-8009}:8009"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - ACSS_DB_HOST=postgres
-    env_file:
-      - ./setup/prod_envs/asp_backend/.env
-    volumes:
-      - ${TEOCO_DATA_DIR}:/app/teoco_data_store
-      - network_bil_volume:/mnt/mapdata:ro
-    networks:
-      - app_network
-      - aana_auth_server_keycloak-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8009/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
-
-  # ACSS Celery Worker Service (Heavy Tasks)
-  acss_worker:
-    build:
-      context: ./asp_server
-      dockerfile: Dockerfile
-    container_name: acss_worker
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      acss_api:
-        condition: service_started
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - ACSS_DB_HOST=postgres
-    env_file:
-      - ./setup/prod_envs/asp_backend/.env
-    volumes:
-      - ${TEOCO_DATA_DIR}:/app/teoco_data_store
-      - network_bil_volume:/mnt/mapdata:ro
-    command: celery -A asp_app.celery_app worker -Q acss_heavy --loglevel=info --concurrency=2
-    networks:
-      - app_network
-      - aana_auth_server_keycloak-network
-
-  # Frontend Service
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
         - VITE_LANGGRAPH_API_URL=${VITE_LANGGRAPH_API_URL:-/langgraph-api}
-        - VITE_DOWNLOAD_SERVICE_API_URL=${VITE_DOWNLOAD_SERVICE_API_URL:-/download-api}
         - VITE_KEYCLOAK_REALM=${VITE_KEYCLOAK_REALM:-aan}
         - VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID:-react-app-prod}
-        - VITE_ACSS_API_URL=${VITE_ACSS_API_URL:-/acss-api}
-        - VITE_ACSS_HEALTH_INTERVAL=${VITE_ACSS_HEALTH_INTERVAL:-5000}
         - VITE_RAG_DOCUMENTATIONS_BASE_URL=${VITE_RAG_DOCUMENTATIONS_BASE_URL:-teoco_data_store/document_rag/data}
         - VITE_RAG_IMAGES_BASE_URL=${VITE_RAG_IMAGES_BASE_URL:-teoco_data_store/document_rag}
     container_name: frontend
@@ -203,45 +93,12 @@ services:
     depends_on:
       agent_server:
         condition: service_healthy
-      download_api:
-        condition: service_healthy
-      acss_api:
-        condition: service_healthy
     volumes:
       - ${TEOCO_DATA_DIR}:/app/frontend/teoco_data_store
       - ./setup/certs:/etc/nginx/certs:ro
     networks:
       - app_network
 
-  # Pipeline Streamlit UI
-  pipeline_streamlit:
-    build:
-      context: ./pipeline
-      dockerfile: Dockerfile
-    container_name: pipeline_streamlit
-    restart: unless-stopped
-    ports:
-      - "${PIPELINE_STREAMLIT_PORT:-8501}:8501"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - ./setup/prod_envs/pipeline/.env
-    environment:
-      - DB_HOST=${DB_HOST:-postgres}
-      - DB_PORT=5432
-    volumes:
-      - ${TEOCO_DATA_DIR}:/app/teoco_data_store
-    networks:
-      - app_network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8501/_stcore/health" ]
-      interval: 60s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-  
-  # RAG Retrieval Server
   rag_retrieval_server:
     build:
       context: ./rag_retrieval_server
@@ -262,20 +119,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
-    
-  # Dozzle — Real-time Docker log viewer
-  dozzle:
-    image: amir20/dozzle:v10.7.1
-    container_name: dozzle
-    restart: unless-stopped
-    ports:
-      - "9999:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - app_network
 
-  # Phoenix (Arize) — Local LLM tracing & observability
   phoenix:
     image: arizephoenix/phoenix:20.3.0
     container_name: phoenix
@@ -301,9 +145,3 @@ volumes:
   postgres_data:
   redis_data:
   phoenix_data:
-  network_bil_volume:
-    driver: local
-    driver_opts:
-      type: cifs
-      o: username=${SMB_USERNAME},password=${SMB_PASSWORD},domain=${SMB_DOMAIN},uid=1000,gid=1000,vers=3.0
-      device: ${NETWORK_BIL_PATH}
