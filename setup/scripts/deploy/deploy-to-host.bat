@@ -190,14 +190,12 @@ REM =====================================================================
 echo [6/9] Updating environment files...
 
 REM --- 6a) .env (root) ---
-echo        6a) .env  (SMB_USERNAME, SMB_PASSWORD, VITE_KEYCLOAK_URL, TEOCO_DATA_DIR)
+echo        6a) .env  (VITE_KEYCLOAK_URL, TALKTODB_DATA_DIR)
 set "ENV_FILE=%REPO%\.env"
 powershell -ExecutionPolicy Bypass -Command ^
   "$f = Get-Content '%ENV_FILE%' -Raw;" ^
-  "$f = $f -replace '(?m)^SMB_USERNAME=.*$',  'SMB_USERNAME=%SMB_USER%';" ^
-  "$f = $f -replace '(?m)^SMB_PASSWORD=.*$',  'SMB_PASSWORD=%SMB_PASS%';" ^
   "$f = $f -replace '(?m)^VITE_KEYCLOAK_URL=.*$', 'VITE_KEYCLOAK_URL=https://%NEW_HOST%:8443';" ^
-  "$f = $f -replace '(?m)^TEOCO_DATA_DIR=.*$', 'TEOCO_DATA_DIR=$${USERPROFILE}/teoco_data_store';" ^
+  "$f = $f -replace '(?m)^TALKTODB_DATA_DIR=.*$', 'TALKTODB_DATA_DIR=$${USERPROFILE}/talktodb_data';" ^
   "[IO.File]::WriteAllText('%ENV_FILE%', $f)"
 if errorlevel 1 (
     echo        ERROR writing .env
@@ -235,39 +233,18 @@ if exist "%BE_ENV%" (
     echo        SKIP — file not found
 )
 
-REM --- 6d) setup/prod_envs/asp_backend/.env ---
-echo        6d) setup\prod_envs\asp_backend\.env  (KEYCLOAK_ISSUER)
-set "ACSS_ENV=%REPO%\setup\prod_envs\asp_backend\.env"
-if exist "%ACSS_ENV%" (
+REM --- 6d) setup/prod_envs/rag_retrieval_server/.env ---
+set "RAG_ENV=%REPO%\setup\prod_envs\rag_retrieval_server\.env"
+if exist "%RAG_ENV%" (
     powershell -ExecutionPolicy Bypass -Command ^
-      "$f = Get-Content '%ACSS_ENV%' -Raw;" ^
-      "$f = $f -replace '(?m)^KEYCLOAK_ISSUER=.*$', 'KEYCLOAK_ISSUER=https://%NEW_HOST%:8443';" ^
-      "[IO.File]::WriteAllText('%ACSS_ENV%', $f)"
-    if errorlevel 1 (
-        echo        ERROR writing asp_backend .env
-        exit /b 1
-    )
-    echo        OK
-) else (
-    echo        SKIP — file not found
+      "$f = Get-Content '%RAG_ENV%' -Raw;" ^
+      "$f = $f -replace '(?m)^STORAGE_BASE_PATH=.*$', 'STORAGE_BASE_PATH=/app/talktodb_data';" ^
+      "[IO.File]::WriteAllText('%RAG_ENV%', $f)"
+    echo        6d) rag_retrieval_server\.env STORAGE_BASE_PATH OK
 )
 
-REM =====================================================================
-REM  STEP 6e-g — Apply optional overrides (--network_bill, --eds_url, --cwe_url)
-REM =====================================================================
 if not "%OPT_NETWORK_BILL%"=="" (
-    echo        6e - Applying --network_bill override: %OPT_NETWORK_BILL%
-    call :apply_network_bill "%OPT_NETWORK_BILL%"
-)
-
-if not "%OPT_EDS_URL%"=="" (
-    echo        6f - Applying --eds_url override: %OPT_EDS_URL%
-    call :apply_eds_url "%OPT_EDS_URL%"
-)
-
-if not "%OPT_CWE_URL%"=="" (
-    echo        6g - Applying --cwe_url override: %OPT_CWE_URL%
-    call :apply_cwe_url "%OPT_CWE_URL%"
+    echo        NOTE: --network_bill / --eds_url / --cwe_url ignored (legacy ACSS/pipeline removed).
 )
 echo.
 

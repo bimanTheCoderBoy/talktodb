@@ -23,7 +23,7 @@ docker-compose.yml
 
 # Source code is shipped via wheels in dist/, not copied directly
 src
-teoco_data_store
+talktodb_data
 
 # Ignore build and cache directories (but keep dist/ for pre-built wheels)
 build

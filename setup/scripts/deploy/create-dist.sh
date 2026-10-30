@@ -39,9 +39,9 @@ rm -rf "$DIST"
 mkdir -p "$DIST"
 
 docker save -o "$DIST/all-images.tar" \
-  aana_core_services-frontend \
-  aana_core_services-agent_server \
-  aana_core_services-rag_retrieval_server \
+  talktodb-frontend \
+  talktodb-agent_server \
+  talktodb-rag_retrieval_server \
   postgis/postgis:16-3.4 \
   redis:7-alpine \
   arizephoenix/phoenix:20.3.0 \

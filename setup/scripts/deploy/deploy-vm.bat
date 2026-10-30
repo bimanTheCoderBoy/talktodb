@@ -83,7 +83,7 @@ echo [2/6] Transferring .env files to VM via scp...
 
 REM Ensure remote directories exist
 echo        Creating remote directories...
-ssh -q "%TARGET%" "mkdir -p %REMOTE%/auth_server %REMOTE%/setup/prod_envs/agent_server %REMOTE%/setup/prod_envs/asp_backend"
+ssh -q "%TARGET%" "mkdir -p %REMOTE%/auth_server %REMOTE%/setup/prod_envs/agent_server %REMOTE%/setup/prod_envs/rag_retrieval_server"
 
 set "SCP_FAIL=0"
 
@@ -111,21 +111,12 @@ if exist "%REPO%\setup\prod_envs\agent_server\.env" (
     echo        -^> setup/prod_envs/agent_server/.env  (missing locally, SKIPPED^)
 )
 
-REM --- setup/prod_envs/asp_backend/.env ---
-if exist "%REPO%\setup\prod_envs\asp_backend\.env" (
-    echo        -^> setup/prod_envs/asp_backend/.env
-    scp -q "%REPO%\setup\prod_envs\asp_backend\.env" "%TARGET%:%REMOTE%/setup/prod_envs/asp_backend/.env" || set "SCP_FAIL=1"
+REM --- setup/prod_envs/rag_retrieval_server/.env ---
+if exist "%REPO%\setup\prod_envs\rag_retrieval_server\.env" (
+    echo        -^> setup/prod_envs/rag_retrieval_server/.env
+    scp -q "%REPO%\setup\prod_envs\rag_retrieval_server\.env" "%TARGET%:%REMOTE%/setup/prod_envs/rag_retrieval_server/.env" || set "SCP_FAIL=1"
 ) else (
-    echo        -^> setup/prod_envs/asp_backend/.env  (missing locally, SKIPPED^)
-)
-
-REM --- setup/prod_envs/pipeline/.env (if exists) ---
-if exist "%REPO%\setup\prod_envs\pipeline\.env" (
-    ssh -q "%TARGET%" "mkdir -p %REMOTE%/setup/prod_envs/pipeline"
-    echo        -^> setup/prod_envs/pipeline/.env
-    scp -q "%REPO%\setup\prod_envs\pipeline\.env" "%TARGET%:%REMOTE%/setup/prod_envs/pipeline/.env" || set "SCP_FAIL=1"
-) else (
-    echo        -^> setup/prod_envs/pipeline/.env  (missing locally, SKIPPED^)
+    echo        -^> setup/prod_envs/rag_retrieval_server/.env  (missing locally, SKIPPED^)
 )
 
 if "%SCP_FAIL%"=="1" (

@@ -5,7 +5,13 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-RANORA_CONFIG_DB_NAME = os.getenv("RANORA_CONFIG_DB_NAME", "ranora_config")
+# Postgres database for semantic catalog ORM (init: setup/scripts/postgres_init_scripts)
+CATALOG_DB_NAME = os.getenv(
+    "CATALOG_DB_NAME",
+    os.getenv("RANORA_CONFIG_DB_NAME", "talktodb_config"),
+)
+# Backward-compatible alias
+RANORA_CONFIG_DB_NAME = CATALOG_DB_NAME
 
 
 class PostgresConnectionSettings(BaseModel):
@@ -28,8 +34,8 @@ class PostgresConnectionSettings(BaseModel):
         return cls(
             host=os.getenv("DB_HOST", "localhost"),
             port=int(os.getenv("DB_PORT", "5432")),
-            user=os.getenv("DB_USER", os.getenv("API_DB_USER", "csv_user")),
-            password=os.getenv("DB_PASSWORD", os.getenv("API_DB_PASSWORD", "csv_password")),
+            user=os.getenv("DB_USER", "csv_user"),
+            password=os.getenv("DB_PASSWORD", "csv_password"),
             pool_size=int(os.getenv("DB_POOL_SIZE", "5")),
             max_overflow=int(os.getenv("DB_POOL_MAX_OVERFLOW", "10")),
         )

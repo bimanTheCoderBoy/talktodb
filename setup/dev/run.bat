@@ -60,7 +60,7 @@ echo.
 echo [3/4] Core stack ...
 
 echo   -^> new terminal: Backend  ^(langgraph dev^)
-start "AAN-Backend" powershell -NoExit -Command ^
+start "talkToDB-Backend" powershell -NoExit -Command ^
   "cd '%ROOT%'; Write-Host '--- Backend (langgraph dev) ---' -Fore Cyan; uv run --package agent-server --directory agent_server langgraph dev"
 
 echo   -^> new terminal: Frontend ^(npm run dev^)
@@ -74,7 +74,7 @@ start "RAG-Retrieval" powershell -NoExit -Command ^
 :: ============================== SUMMARY ====================================
 echo.
 echo ==========================================
-echo   Dev Environment (bare minimum)
+echo   talkToDB dev environment
 echo ==========================================
 echo   Auth     : https://localhost:8443
 echo   Postgres : localhost:5432

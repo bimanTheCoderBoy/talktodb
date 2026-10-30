@@ -228,11 +228,9 @@ echo
 echo "[6/9] Updating environment files..."
 
 # --- 6a) .env (root) ---
-echo "       6a) .env  (SMB_USERNAME, SMB_PASSWORD, VITE_KEYCLOAK_URL, TEOCO_DATA_DIR)"
-set_env "$REPO/.env" "SMB_USERNAME"      "$SMB_USER"
-set_env "$REPO/.env" "SMB_PASSWORD"      "$SMB_PASS"
+echo "       6a) .env  (VITE_KEYCLOAK_URL, TALKTODB_DATA_DIR)"
 set_env "$REPO/.env" "VITE_KEYCLOAK_URL" "https://${NEW_HOST}:8443"
-set_env "$REPO/.env" "TEOCO_DATA_DIR"    "\${HOME}/teoco_data_store"
+set_env "$REPO/.env" "TALKTODB_DATA_DIR" "\${HOME}/talktodb_data"
 echo "       OK"
 
 # --- 6b) auth_server/.env ---
@@ -250,86 +248,15 @@ else
   echo "       SKIP — file not found"
 fi
 
-# --- 6d) setup/prod_envs/asp_backend/.env ---
-echo "       6d) setup/prod_envs/asp_backend/.env  (KEYCLOAK_ISSUER)"
-ACSS_ENV="$REPO/setup/prod_envs/asp_backend/.env"
-if [[ -f "$ACSS_ENV" ]]; then
-  set_env "$ACSS_ENV" "KEYCLOAK_ISSUER" "https://${NEW_HOST}:8443"
-  echo "       OK"
-else
-  echo "       SKIP — file not found"
+# --- 6d) setup/prod_envs/rag_retrieval_server/.env ---
+RAG_ENV="$REPO/setup/prod_envs/rag_retrieval_server/.env"
+if [[ -f "$RAG_ENV" ]]; then
+  set_env "$RAG_ENV" "STORAGE_BASE_PATH" "/app/talktodb_data"
+  echo "       6d) rag_retrieval_server/.env STORAGE_BASE_PATH OK"
 fi
 
-# =====================================================================
-#  STEP 6e-g — Apply optional overrides (--network_bill, --eds_url, --cwe_url)
-# =====================================================================
-PIPE_ENV="$REPO/setup/prod_envs/pipeline/.env"
-
-if [[ -n "$OPT_NETWORK_BILL" ]]; then
-  echo "       6e) Applying --network_bill override: $OPT_NETWORK_BILL"
-  # Convert to UNC path format (backslashes) for env files
-  NET_UNC="${OPT_NETWORK_BILL//\//\\}"
-  
-  # .env (root): NETWORK_BIL_PATH (used by docker-compose.yml)
-  ENV_FILE="$REPO/.env"
-  if [[ -f "$ENV_FILE" ]]; then
-    set_env "$ENV_FILE" "NETWORK_BIL_PATH" "$OPT_NETWORK_BILL"
-    echo "            .env NETWORK_BIL_PATH updated"
-  fi
-  
-  # asp_backend/.env: COVERAGE_ROOT_OUTPUT_LOCATION
-  if [[ -f "$ACSS_ENV" ]]; then
-    set_env "$ACSS_ENV" "COVERAGE_ROOT_OUTPUT_LOCATION" "$NET_UNC"
-    echo "            asp_backend/.env COVERAGE_ROOT_OUTPUT_LOCATION updated"
-  fi
-  
-  # agent_server/.env: ROOT_OUTPUT_LOCATION_ROOT_OUTPUT_LOCATION
-  if [[ -f "$BE_ENV" ]]; then
-    set_env "$BE_ENV" "ROOT_OUTPUT_LOCATION_ROOT_OUTPUT_LOCATION" "$NET_UNC"
-    echo "            agent_server/.env ROOT_OUTPUT_LOCATION_ROOT_OUTPUT_LOCATION updated"
-  fi
-fi
-
-if [[ -n "$OPT_EDS_URL" ]]; then
-  echo "       6f) Applying --eds_url override: $OPT_EDS_URL"
-  
-  # asp_backend/.env: EDS_CREATE_URL, EDS_DELETE_URL
-  if [[ -f "$ACSS_ENV" ]]; then
-    set_env "$ACSS_ENV" "EDS_CREATE_URL" "http://${OPT_EDS_URL}/v1/EDS/Create"
-    set_env "$ACSS_ENV" "EDS_DELETE_URL" "http://${OPT_EDS_URL}/v1/EDS/Delete"
-    echo "            asp_backend/.env EDS_CREATE_URL, EDS_DELETE_URL updated"
-  fi
-  
-  # agent_server/.env: EDS_API_BASE_URL, EDS_UPDATE_URL
-  if [[ -f "$BE_ENV" ]]; then
-    set_env "$BE_ENV" "EDS_API_BASE_URL" "http://${OPT_EDS_URL}/v1/EDS/Update/"
-    set_env "$BE_ENV" "EDS_UPDATE_URL" "http://${OPT_EDS_URL}/v1/EDS/Update"
-    echo "            agent_server/.env EDS_API_BASE_URL, EDS_UPDATE_URL updated"
-  fi
-  
-  # pipeline/.env: EDS_API_BASE_URL
-  if [[ -f "$PIPE_ENV" ]]; then
-    set_env "$PIPE_ENV" "EDS_API_BASE_URL" "http://${OPT_EDS_URL}/v1/EDS/Query/"
-    echo "            pipeline/.env EDS_API_BASE_URL updated"
-  fi
-fi
-
-if [[ -n "$OPT_CWE_URL" ]]; then
-  echo "       6g) Applying --cwe_url override: $OPT_CWE_URL"
-  
-  # asp_backend/.env: COVERAGE_API_CREATE_ENDPOINT, COVERAGE_API_STATUS_ENDPOINT
-  if [[ -f "$ACSS_ENV" ]]; then
-    set_env "$ACSS_ENV" "COVERAGE_API_CREATE_ENDPOINT" "http://${OPT_CWE_URL}/v1/CWE/create"
-    set_env "$ACSS_ENV" "COVERAGE_API_STATUS_ENDPOINT" "http://${OPT_CWE_URL}/v1/CWE/query"
-    echo "            asp_backend/.env COVERAGE_API_CREATE_ENDPOINT, COVERAGE_API_STATUS_ENDPOINT updated"
-  fi
-  
-  # agent_server/.env: COVERAGE_API_CREATE_COVERAGE_ENDPOINT, COVERAGE_API_STATUS_POLLING_ENDPOINT
-  if [[ -f "$BE_ENV" ]]; then
-    set_env "$BE_ENV" "COVERAGE_API_CREATE_COVERAGE_ENDPOINT" "http://${OPT_CWE_URL}/v1/CWE/create"
-    set_env "$BE_ENV" "COVERAGE_API_STATUS_POLLING_ENDPOINT" "http://${OPT_CWE_URL}/v1/CWE/query/"
-    echo "            agent_server/.env COVERAGE_API_CREATE_COVERAGE_ENDPOINT, COVERAGE_API_STATUS_POLLING_ENDPOINT updated"
-  fi
+if [[ -n "$OPT_NETWORK_BILL" || -n "$OPT_EDS_URL" || -n "$OPT_CWE_URL" ]]; then
+  echo "       NOTE: --network_bill / --eds_url / --cwe_url are ignored (legacy ACSS/pipeline removed)."
 fi
 echo
 

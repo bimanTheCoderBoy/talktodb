@@ -1,6 +1,6 @@
 class FileSystemToolConfig:
     def __init__(self):
-        self.base_dir = "./teoco_data_store"
+        self.base_dir = "./talktodb_data"
 
 
 

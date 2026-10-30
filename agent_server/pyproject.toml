@@ -1,7 +1,7 @@
 [project]
 name = "agent-server"
 version = "1.6.1"
-description = "TEOCO ASSET AUTONOMUS AGENT is a tool that helps you to manage your assets using AI and RAG."
+description = "talkToDB LangGraph computer agent and API."
 authors = [
     { name = "Chandan Singh", email = "chandan.singh@teoco.com" },
     { name = "Biman Kumar Das", email = "biman.das@teoco.com" },
@@ -22,7 +22,6 @@ dependencies = [
     "httpx==0.28.1",
     "aiofiles==25.1.0",
     "python-jose==3.5.0",
-    "cryptography==50.0.0",
     "fastapi==0.141.1",
     "python-multipart==0.0.32",
     "sqlalchemy[asyncio]==2.0.52",

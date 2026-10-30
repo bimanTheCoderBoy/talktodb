@@ -1,4 +1,4 @@
-name: aana_core_services
+name: talktodb
 
 services:
   postgres:
@@ -58,7 +58,7 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - POSTGRES_URI=${POSTGRES_URI:-postgres://csv_user:csv_password@postgres:5432/langgraph_data?sslmode=disable}
     volumes:
-      - ${TEOCO_DATA_DIR}:/app/teoco_data_store
+      - ${TALKTODB_DATA_DIR:-${TEOCO_DATA_DIR}}:/app/talktodb_data
     env_file:
       - ./setup/prod_envs/agent_server/.env
     extra_hosts:
@@ -81,8 +81,8 @@ services:
         - VITE_LANGGRAPH_API_URL=${VITE_LANGGRAPH_API_URL:-/langgraph-api}
         - VITE_KEYCLOAK_REALM=${VITE_KEYCLOAK_REALM:-aan}
         - VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID:-react-app-prod}
-        - VITE_RAG_DOCUMENTATIONS_BASE_URL=${VITE_RAG_DOCUMENTATIONS_BASE_URL:-teoco_data_store/document_rag/data}
-        - VITE_RAG_IMAGES_BASE_URL=${VITE_RAG_IMAGES_BASE_URL:-teoco_data_store/document_rag}
+        - VITE_RAG_DOCUMENTATIONS_BASE_URL=${VITE_RAG_DOCUMENTATIONS_BASE_URL:-talktodb_data/document_rag/data}
+        - VITE_RAG_IMAGES_BASE_URL=${VITE_RAG_IMAGES_BASE_URL:-talktodb_data/document_rag}
     container_name: frontend
     restart: unless-stopped
     ports:
@@ -94,7 +94,7 @@ services:
       agent_server:
         condition: service_healthy
     volumes:
-      - ${TEOCO_DATA_DIR}:/app/frontend/teoco_data_store
+      - ${TALKTODB_DATA_DIR:-${TEOCO_DATA_DIR}}:/app/frontend/talktodb_data
       - ./setup/certs:/etc/nginx/certs:ro
     networks:
       - app_network
@@ -112,7 +112,7 @@ services:
     networks:
       - app_network
     volumes:
-      - ${TEOCO_DATA_DIR}:/app/teoco_data_store
+      - ${TALKTODB_DATA_DIR:-${TEOCO_DATA_DIR}}:/app/talktodb_data
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8010/health" ]
       interval: 30s

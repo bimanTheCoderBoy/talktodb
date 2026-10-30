@@ -6,7 +6,7 @@ __pycache__/
 .gitignore
 *.md
 .python-version
-teoco_data_store/
+talktodb_data/
 
 # Source code is shipped via wheels in dist/, not copied directly
 app/

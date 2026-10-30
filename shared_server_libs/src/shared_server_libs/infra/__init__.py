@@ -3,6 +3,7 @@
 import logging
 
 from shared_server_libs.infra.config import (
+    CATALOG_DB_NAME,
     RANORA_CONFIG_DB_NAME,
     PostgresConnectionSettings,
     RedisSettings,
@@ -15,6 +16,7 @@ from shared_server_libs.infra.redis_pool import RedisPoolSingleton
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "CATALOG_DB_NAME",
     "RANORA_CONFIG_DB_NAME",
     "PostgresConnectionSettings",
     "RedisSettings",

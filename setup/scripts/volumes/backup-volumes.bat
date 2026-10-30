@@ -216,11 +216,12 @@ REM --------------------------------------------------------------------------
 set "TEOCO_DIR="
 set "TEOCO_RAW="
 if exist "%REPO%\.env" (
-    for /f "usebackq tokens=1,* delims==" %%A in (`findstr /b /c:"TEOCO_DATA_DIR=" "%REPO%\.env"`) do set "TEOCO_RAW=%%B"
+    for /f "usebackq tokens=1,* delims==" %%A in (`findstr /b /c:"TALKTODB_DATA_DIR=" "%REPO%\.env"`) do set "TEOCO_RAW=%%B"
+    if not defined TECO_RAW for /f "usebackq tokens=1,* delims==" %%A in (`findstr /b /c:"TEOCO_DATA_DIR=" "%REPO%\.env"`) do set "TEOCO_RAW=%%B"
 )
 
 if not defined TEOCO_RAW (
-    echo SKIP  TEOCO_DATA_DIR not set in .env
+    echo SKIP  TALKTODB_DATA_DIR not set in .env
     exit /b 0
 )
 

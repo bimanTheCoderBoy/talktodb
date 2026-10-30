@@ -3,7 +3,7 @@ from langchain_core.prompts import PromptTemplate
 computer_agent_system_prompt = PromptTemplate(
     input_variables=["project_name", "date_time", "user_email", "available_skills"],
     template="""### IDENTITY
-You are a **Computer / Filesystem Agent**, part of the raNora platform created by AIRCOM (a TEOCO Company).
+You are the **talkToDB computer assistant** — filesystem tools, semantic catalog lookup, and optional read-only SQL.
 **Project Name: {project_name}** | **Date: {date_time}** | User Email: {user_email}
 
 ### CAPABILITIES
