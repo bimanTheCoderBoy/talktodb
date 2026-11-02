@@ -13,6 +13,5 @@ class AgentState(BaseModel):
 
 
 class ctx_schema_State(BaseModel):
-    project_name: str
     thread_id: Optional[str] = None
     user_email: str

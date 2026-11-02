@@ -1,19 +1,19 @@
 from typing import Any
 
-from langchain_core.messages import ToolMessage, AIMessage
-from langgraph.config import get_stream_writer
+from langchain_core.messages import ToolMessage
+from langgraph.prebuilt import ToolNode
 from langgraph.runtime import Runtime
+from langgraph.types import Command
+
+from computer.config.logger import get_computer_logger
 from computer.state import AgentState, ctx_schema_State
 from computer.tools import get_computer_tools_for_user
-from computer.config.logger import get_computer_logger
+from computer.utils.tool_call_utils import partition_tool_calls, pending_tool_calls
 from computer.utils.tool_result_format import (
     format_llm_tool_result,
     format_ui_tool_result,
     truncate_tool_result_for_llm,
 )
-from langgraph.prebuilt import ToolNode
-from langgraph.types import Command
-from langchain_core.runnables import RunnableConfig
 
 logger = get_computer_logger(__name__)
 
@@ -54,31 +54,39 @@ def _split_tool_message_for_channels(
         ToolMessage(content=ui_content, tool_call_id=tc_id, name=tool_name),
     )
 
+
 async def tool_node_wrapper(state: AgentState, runtime: Runtime[ctx_schema_State]):
     user_email = getattr(runtime.context, "user_email", None) or getattr(state, "user_email", None)
     project_name = getattr(runtime.context, "project_name", None) or getattr(state, "project_name", None)
     if not user_email:
-        logger.error("No user email found in runtime context or in the state. provide a user email in the runtime context or in the state.")
-        raise ValueError("No user email found in runtime context or in the state. provide a user email in the runtime context or in the state.")
-    else:
-        fs_tools = await get_computer_tools_for_user(
-            user_email,
-            project_name=project_name,
+        logger.error(
+            "No user email found in runtime context or in the state. "
+            "provide a user email in the runtime context or in the state."
         )
-    tool_node = ToolNode(tools=fs_tools)
-    last_message = state.internal_messages[-1]
-    if not hasattr(last_message, "tool_calls") or not last_message.tool_calls:
+        raise ValueError(
+            "No user email found in runtime context or in the state. "
+            "provide a user email in the runtime context or in the state."
+        )
+
+    pending = pending_tool_calls(state)
+    server_tool_calls, _ = partition_tool_calls(pending)
+    if not server_tool_calls:
         return {"internal_messages": state.internal_messages}
 
-    tool_calls = last_message.tool_calls
-    tool_call_registry = _tool_call_registry(tool_calls)
-    tool_outputs = await tool_node.ainvoke(tool_calls)
+    fs_tools = await get_computer_tools_for_user(
+        user_email,
+        project_name=project_name,
+    )
+    tool_node = ToolNode(tools=fs_tools)
+
+    tool_call_registry = _tool_call_registry(server_tool_calls)
+    tool_outputs = await tool_node.ainvoke(server_tool_calls)
     if isinstance(tool_outputs, dict):
         tool_outputs = tool_outputs.get("messages", [])
-    logger.info(f"Tool outputs: {tool_outputs}")
+    logger.info("Tool outputs: %s", tool_outputs)
 
     internal_messages_to_add = []
-    ui_messages_to_add=[]
+    ui_messages_to_add = []
     compiled_updates = {}
     compiled_goto = []
     is_a_command = False
@@ -113,21 +121,12 @@ async def tool_node_wrapper(state: AgentState, runtime: Runtime[ctx_schema_State
             internal_messages_to_add.append(item)
             ui_messages_to_add.append(item)
 
-    # logger.info(f"{compiled_updates}")
-    logger.info(internal_messages_to_add)
-    logger.info(ui_messages_to_add)
-    
-    compiled_updates["internal_messages"]=state.internal_messages+internal_messages_to_add
-    compiled_updates["ui_messages"]=state.ui_messages+ui_messages_to_add
+    compiled_updates["internal_messages"] = state.internal_messages + internal_messages_to_add
+    compiled_updates["ui_messages"] = state.ui_messages + ui_messages_to_add
 
     if is_a_command:
         return Command(
             goto=compiled_goto,
-            update=compiled_updates
+            update=compiled_updates,
         )
-    else:
-        return compiled_updates
-
-
-
-
+    return compiled_updates

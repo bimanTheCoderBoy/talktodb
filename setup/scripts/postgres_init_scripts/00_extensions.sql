@@ -1,13 +1,13 @@
 -- =============================================================================
--- talkToDB — PostgreSQL databases for LangGraph + semantic catalog
+-- talkToDB — PostgreSQL databases for LangGraph + app data
 -- =============================================================================
 
 SELECT 'CREATE DATABASE langgraph_data'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'langgraph_data')\gexec
 
--- Semantic catalog (tables from manage_db_context / ORM). Name overridable via CATALOG_DB_NAME.
-SELECT 'CREATE DATABASE talktodb_config'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'talktodb_config')\gexec
+-- App database (catalog tables and future app tables). Name overridable via TALKTODB_DB_NAME.
+SELECT 'CREATE DATABASE talktodb'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'talktodb')\gexec
 
 DO $$
 BEGIN
@@ -17,9 +17,9 @@ BEGIN
 END
 $$;
 
-GRANT CONNECT ON DATABASE talktodb_config TO app_reader;
+GRANT CONNECT ON DATABASE talktodb TO app_reader;
 
-\c talktodb_config
+\c talktodb
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 GRANT USAGE ON SCHEMA public TO app_reader;

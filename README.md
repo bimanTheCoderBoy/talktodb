@@ -1,6 +1,6 @@
 # talkToDB
 
-Chat with your database: Keycloak login, LangGraph **computer** agent, semantic catalog (Postgres + RAG), optional SQL against scoped project DBs.
+Chat with your database: Keycloak login, LangGraph **computer** agent, semantic catalog (Postgres + RAG). SQL execution is client-side (local connector) in later phases.
 
 Monorepo: [uv](https://docs.astral.sh/uv/) workspace + [poethepoet](https://poethepoet.naber.dev/) tasks.
 
@@ -11,7 +11,7 @@ Monorepo: [uv](https://docs.astral.sh/uv/) workspace + [poethepoet](https://poet
 | Frontend | `frontend/` | 5173 | React chat UI |
 | Agent server | `agent_server/` | 2024 (`langgraph dev`) | `computer` graph + JWT middleware |
 | RAG retrieval | `rag_retrieval_server/` | 8010 | Catalog / doc vector search (LanceDB) |
-| Shared libs | `shared_server_libs/` | — | Postgres catalog, DB access, Redis RLS cache |
+| Shared libs | `shared_server_libs/` | — | talkToDB Postgres session (`db_access`) |
 | Auth | `auth_server/` | 8443 | Keycloak (separate `docker compose`) |
 
 **Docker Compose** (`docker-compose.yml`): Postgres, Redis, Phoenix (optional tracing), agent, frontend, RAG.
@@ -19,7 +19,7 @@ Monorepo: [uv](https://docs.astral.sh/uv/) workspace + [poethepoet](https://poet
 | Postgres DB | Purpose |
 |-------------|---------|
 | `langgraph_data` | LangGraph checkpoints |
-| `talktodb_config` | Semantic catalog tables (`CATALOG_DB_NAME`) |
+| `talktodb` | App data: semantic catalog and future tables (`TALKTODB_DB_NAME`) |
 
 ## Prerequisites
 
@@ -54,10 +54,10 @@ Login via Keycloak → new chat → messages hit the `computer` assistant.
 
 ## Catalog bootstrap
 
-1. Load CSV into Postgres: [`experiments/manage_db_context/run.py`](experiments/manage_db_context/run.py) (targets `talktodb_config`).
+1. Load CSV into Postgres: [`experiments/manage_db_context/run.py`](experiments/manage_db_context/run.py) (targets `talktodb`).
 2. Build / sync catalog LanceDB per `rag_retrieval_server` config (`STORAGE_BASE_PATH/document_rag/catalog_store`).
 
-**Migrating an old dev Postgres volume:** the catalog DB was renamed from `ranora_config` to `talktodb_config`. Either recreate the `postgres_data` volume or `CREATE DATABASE talktodb_config` and re-run catalog seed. Set `CATALOG_DB_NAME=ranora_config` temporarily if you must keep the old database name.
+**Migrating an old dev Postgres volume:** app data lives in Postgres database `talktodb` (`TALKTODB_DB_NAME`). Legacy names: set `TALKTODB_DB_NAME=talktodb_config` or `CATALOG_DB_NAME=talktodb_config` until you migrate data into `talktodb`. Init script `01_catalog_only.sql` drops legacy `user_project_config`. Old per-project Postgres databases (if any) are not removed automatically.
 
 ## Build & deploy
 
@@ -76,7 +76,7 @@ See [`setup/scripts/deploy/start.sh`](setup/scripts/deploy/start.sh) — hostnam
 agent_server/          LangGraph computer + FastAPI auth wrapper
 frontend/              talkToDB UI
 rag_retrieval_server/  RAG API
-shared_server_libs/    Catalog ORM, agent DB access
+shared_server_libs/    db_access (talkToDB Postgres ORM + session)
 auth_server/           Keycloak
 experiments/manage_db_context/
 setup/                 init, certs, dev runner, deploy scripts

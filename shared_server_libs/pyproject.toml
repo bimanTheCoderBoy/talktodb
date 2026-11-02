@@ -8,7 +8,6 @@ dependencies = [
     "cryptography==50.0.0",
     "sqlalchemy[asyncio]==2.0.52",
     "asyncpg==0.31.0",
-    "redis>=5.0.0",
 ]
 
 [project.optional-dependencies]

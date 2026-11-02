@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from computer.tools.frontend_tool_registry import frontend_tool
 from langchain_core.tools import BaseTool, tool
 from pydantic import BaseModel, Field
 
 from computer.config.logger import get_computer_logger
-from computer.utils.sql_guard import validate_read_only_sql
 from database_context_retrieval.domain.exception.catalog_column import CatalogColumnError
 from database_context_retrieval.domain.exception.catalog_context_search import (
     CatalogContextSearchError,
@@ -26,18 +26,15 @@ from database_context_retrieval.services.catalog_context_search_service import (
 )
 from database_context_retrieval.services.catalog_relation_service import CatalogRelationService
 from database_context_retrieval.services.catalog_table_service import CatalogTableService
-from shared_server_libs.agent_db_access.bootstrap import get_ranora_config_session, get_repository
-from shared_server_libs.agent_db_access.domain.exception.scope_not_configured import (
-    ScopeNotConfiguredError,
-)
-from shared_server_libs.agent_db_access.domain.schema.query_result import QueryResult
-from computer.utils.save_sql_query_result_to_file import save_query_result_to_file
-import asyncio
-
+from shared_server_libs.db_access import get_db_session
+from computer.config.exception import IntentionallyBlockedServerToolCall
 logger = get_computer_logger(__name__)
 
-_RUN_DB_QUERY_TOOL_CACHE: dict[tuple[str, str], BaseTool] = {}
-QUERY_RESULT_FILE_PATH: str = "/output/query_results/"
+_RUN_DB_QUERY_STUB_JSON = (
+    '{"success": false, "error": "Server-side query execution is disabled; '
+    'client execution will be wired in a later phase."}'
+)
+
 
 class GetDatabaseColumnInput(BaseModel):
     table_name: str = Field(description="Exact catalog table name that owns the column.")
@@ -69,7 +66,7 @@ class GetDatabaseTableInput(BaseModel):
 
 class RunDbQueryInput(BaseModel):
     query: str = Field(
-        description="SQL to run against the current project database. Prefer read-only SELECT queries.",
+        description="SQL to run against the user's database. Prefer read-only SELECT queries.",
     )
     params: dict[str, Any] | None = Field(
         default=None,
@@ -77,7 +74,7 @@ class RunDbQueryInput(BaseModel):
     )
     output_file_path: str | None = Field(
         default=None,
-        description=f"Optional file path to save the query result to. If provided, the result will be saved to the that nammed CSV file in {QUERY_RESULT_FILE_PATH} folder. ex: 'azimuth_001' will save to 'output/query_results/azimuth_001.csv'",
+        description="Optional file path to save the query result to the virtual workspace.",
     )
 
 
@@ -97,7 +94,7 @@ async def get_database_table(
     queried_name = table_name.strip()
     logger.info("[DB_CONTEXT] get_database_table table_name=%r", table_name)
     try:
-        async with get_ranora_config_session() as session:
+        async with get_db_session() as session:
             service = CatalogTableService(CatalogTableRepository(session))
             result = await service.get_table_info(
                 table_name,
@@ -138,7 +135,7 @@ async def get_database_column(
         column_name,
     )
     try:
-        async with get_ranora_config_session() as session:
+        async with get_db_session() as session:
             service = CatalogColumnService(CatalogColumnRepository(session))
             result = await service.get_column_info(table_name, column_name)
     except CatalogColumnError as exc:
@@ -177,7 +174,7 @@ async def get_database_relation(
         table_b,
     )
     try:
-        async with get_ranora_config_session() as session:
+        async with get_db_session() as session:
             service = CatalogRelationService(CatalogRelationRepository(session))
             result = await service.get_relation_info(table_a=table_a, table_b=table_b)
     except CatalogRelationError as exc:
@@ -217,7 +214,7 @@ async def search_database_context(query: str) -> str:
     normalized_query = query.strip()
     logger.info("[DB_CONTEXT] search_database_context query=%r", query)
     try:
-        async with get_ranora_config_session() as session:
+        async with get_db_session() as session:
             table_service = CatalogTableService(CatalogTableRepository(session))
             service = CatalogContextSearchService(table_service)
             result = await service.search(query)
@@ -236,100 +233,27 @@ async def search_database_context(query: str) -> str:
     return result.model_dump_json()
 
 
+@frontend_tool("run_db_query")
+@tool("run_db_query", args_schema=RunDbQueryInput, parse_docstring=False)
+async def run_db_query(
+    query: str,
+    params: dict[str, Any] | None = None,
+    output_file_path: str | None = None,
+) -> str:
+    """
+    Execute SQL against the user's database and return structured results.
+
+    Use after get_database_table when you need actual data. Pass named parameters via params
+    when the SQL uses bind placeholders. Returns columns, rows, and row_count as JSON.
+    """
+    logger.info("[DB_CONTEXT] run_db_query stub invoked (should use frontend_tools node)")
+    # return _RUN_DB_QUERY_STUB_JSON
+    raise IntentionallyBlockedServerToolCall()
+
 CATALOG_CONTEXT_TOOLS: list[BaseTool] = [
     get_database_table,
     get_database_column,
     get_database_relation,
     search_database_context,
+    run_db_query,
 ]
-
-
-def _make_run_db_query_tool(project_name: str, user_email: str) -> BaseTool:
-    normalized_project = project_name.strip()
-    normalized_email = user_email.strip()
-
-    @tool("run_db_query", args_schema=RunDbQueryInput, parse_docstring=False)
-    async def run_db_query(
-        query: str,
-        params: dict[str, Any] | None = None,
-        output_file_path: str | None = None,
-    ) -> str:
-        """
-        Execute SQL on the user's current project database with row-level scope applied.
-
-        Use after get_database_table when you need actual data. Pass named parameters via params
-        when the SQL uses bind placeholders. Returns columns, rows, and row_count as JSON.
-        Only a single read-only SELECT statement is accepted.
-        """
-        logger.info(
-            "[DB_CONTEXT] run_db_query project=%r email=%r",
-            normalized_project,
-            normalized_email,
-        )
-        is_read_only, rejection = validate_read_only_sql(query)
-        if not is_read_only:
-            logger.warning("[DB_CONTEXT] run_db_query rejected by read-only guard: %s", rejection)
-            return QueryResult(success=False, error=rejection).model_dump_json()
-
-        try:
-            async with get_repository(normalized_project) as repository:
-                plan = await repository.run_query(
-                    normalized_project,
-                    normalized_email,
-                    f"EXPLAIN {query}",
-                    params,
-                    use_rls=True,
-                )
-                if not plan.success:
-                    logger.warning("[DB_CONTEXT] run_db_query EXPLAIN failed: %s", plan.error)
-                    return QueryResult(
-                        success=False,
-                        error=f"Query failed EXPLAIN validation and was not executed: {plan.error}",
-                    ).model_dump_json()
-                result = await repository.run_query(
-                    normalized_project,
-                    normalized_email,
-                    query,
-                    params,
-                    use_rls=True,
-                )
-                # save the query result to the file if output_file_path is provided
-                if output_file_path:
-                    file_path = f"{QUERY_RESULT_FILE_PATH}{output_file_path}.csv"
-                    save_result = await asyncio.to_thread(save_query_result_to_file, normalized_email, file_path, result)
-                    if save_result.error:
-                        logger.warning("[DB_CONTEXT] run_db_query failed to save result to file: %s", save_result.error)
-                        return QueryResult(success=False, error=f"Failed to save result to file: {save_result.error}").model_dump_json()
-
-
-                return result.model_dump_json()
-
-
-        except ScopeNotConfiguredError as exc:
-            logger.warning("[DB_CONTEXT] run_db_query scope not configured: %s", exc)
-            result = QueryResult(success=False, error=str(exc))
-        except Exception as exc:
-            logger.exception("[DB_CONTEXT] run_db_query unexpected error")
-            result = QueryResult(success=False, error=f"Unexpected error during query execution: {exc}")
-        return result.model_dump_json()
-
-    return run_db_query
-
-
-def get_run_db_query_tool(project_name: str, user_email: str) -> BaseTool:
-    if not project_name or not project_name.strip():
-        raise ValueError("project_name is required for run_db_query")
-    if not user_email or not user_email.strip():
-        raise ValueError("user_email is required for run_db_query")
-
-    key = (project_name.strip().lower(), user_email.strip().lower())
-    if key not in _RUN_DB_QUERY_TOOL_CACHE:
-        _RUN_DB_QUERY_TOOL_CACHE[key] = _make_run_db_query_tool(project_name, user_email)
-    return _RUN_DB_QUERY_TOOL_CACHE[key]
-
-
-def get_database_context_tools(project_name: str, user_email: str) -> list[BaseTool]:
-    return [
-        *CATALOG_CONTEXT_TOOLS,
-        get_run_db_query_tool(project_name, user_email),
-    ]

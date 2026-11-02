@@ -4,10 +4,10 @@ from sqlalchemy import ForeignKey, PrimaryKeyConstraint, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from shared_server_libs.infra.ranora_config_orm import RanoraConfigBase, TimestampMixin
+from shared_server_libs.db_access.orm import DbBase, TimestampMixin
 
 
-class CatalogTable(RanoraConfigBase, TimestampMixin):
+class CatalogTable(DbBase, TimestampMixin):
     __tablename__ = "catalog_table"
 
     name: Mapped[str] = mapped_column(String, primary_key=True)
@@ -35,7 +35,7 @@ class CatalogTable(RanoraConfigBase, TimestampMixin):
     )
 
 
-class CatalogColumn(RanoraConfigBase, TimestampMixin):
+class CatalogColumn(DbBase, TimestampMixin):
     __tablename__ = "catalog_column"
     __table_args__ = (PrimaryKeyConstraint("table_name", "column_name"),)
 
@@ -52,7 +52,7 @@ class CatalogColumn(RanoraConfigBase, TimestampMixin):
     table: Mapped[CatalogTable] = relationship(back_populates="columns")
 
 
-class CatalogRelation(RanoraConfigBase, TimestampMixin):
+class CatalogRelation(DbBase, TimestampMixin):
     __tablename__ = "catalog_relation"
     __table_args__ = (
         PrimaryKeyConstraint(

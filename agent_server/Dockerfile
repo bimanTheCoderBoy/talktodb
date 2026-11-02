@@ -26,7 +26,7 @@ RUN PYTHONDONTWRITEBYTECODE=1 uv pip install --system --no-deps /tmp/dist/*.whl 
 
 # -- LangGraph entry points (module paths, not file paths) --
 ENV LANGGRAPH_HTTP='{"app": "api.main:app"}'
-ENV LANGSERVE_GRAPHS='{"agent": "agent.graph:graph", "db_agent": "db_agent_v2.graph:graph", "computer": "computer.graph:graph"}'
+ENV LANGSERVE_GRAPHS='{"computer": "computer.graph:graph"}'
 
 
 # -- Ensure user deps didn't inadvertently overwrite langgraph-api --

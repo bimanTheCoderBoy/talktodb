@@ -5,13 +5,8 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-# Postgres database for semantic catalog ORM (init: setup/scripts/postgres_init_scripts)
-CATALOG_DB_NAME = os.getenv(
-    "CATALOG_DB_NAME",
-    os.getenv("RANORA_CONFIG_DB_NAME", "talktodb_config"),
-)
-# Backward-compatible alias
-RANORA_CONFIG_DB_NAME = CATALOG_DB_NAME
+
+TALKTODB_DB_NAME = "talktodb"
 
 
 class PostgresConnectionSettings(BaseModel):
@@ -22,8 +17,8 @@ class PostgresConnectionSettings(BaseModel):
     pool_size: Annotated[int, Field(default=5)]
     max_overflow: Annotated[int, Field(default=10)]
 
-    def get_database_url(self, db_name: str) -> str:
-        key = db_name.lower().strip()
+    def get_database_url(self, db_name: str | None = None) -> str:
+        key = (db_name or TALKTODB_DB_NAME).lower().strip()
         return (
             f"postgresql+asyncpg://{self.user}:{self.password}"
             f"@{self.host}:{self.port}/{key}"
@@ -38,20 +33,4 @@ class PostgresConnectionSettings(BaseModel):
             password=os.getenv("DB_PASSWORD", "csv_password"),
             pool_size=int(os.getenv("DB_POOL_SIZE", "5")),
             max_overflow=int(os.getenv("DB_POOL_MAX_OVERFLOW", "10")),
-        )
-
-
-class RedisSettings(BaseModel):
-    url: Annotated[str, Field(default="redis://localhost:6379/0")]
-    default_ttl_seconds: Annotated[int | None, Field(default=900)]
-    key_prefix: Annotated[str, Field(default="rls:cell_iids")]
-
-    @classmethod
-    def from_env(cls) -> RedisSettings:
-        return cls(
-            url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
-            default_ttl_seconds=int(os.getenv("REDIS_SCOPE_TTL_SECONDS", "900"))
-            if os.getenv("REDIS_SCOPE_TTL_SECONDS")
-            else 900,
-            key_prefix=os.getenv("REDIS_SCOPE_KEY_PREFIX", "rls:cell_iids"),
         )

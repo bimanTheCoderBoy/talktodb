@@ -6,11 +6,11 @@ from sqlalchemy import DateTime, func
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from shared_server_libs.infra.config import RANORA_CONFIG_DB_NAME, PostgresConnectionSettings
+from shared_server_libs.db_access.config import PostgresConnectionSettings, TALKTODB_DB_NAME
 
 
-class RanoraConfigBase(DeclarativeBase):
-    """Declarative base for ORM models stored in the ranora_config database."""
+class DbBase(DeclarativeBase):
+    """Declarative base for ORM models stored in the talkToDB Postgres database."""
 
 
 class TimestampMixin:
@@ -27,9 +27,9 @@ class TimestampMixin:
     )
 
 
-def create_ranora_config_engine(settings: PostgresConnectionSettings) -> AsyncEngine:
+def create_db_engine(settings: PostgresConnectionSettings) -> AsyncEngine:
     return create_async_engine(
-        settings.get_database_url(RANORA_CONFIG_DB_NAME),
+        settings.get_database_url(TALKTODB_DB_NAME),
         pool_size=settings.pool_size,
         max_overflow=settings.max_overflow,
         pool_pre_ping=True,
