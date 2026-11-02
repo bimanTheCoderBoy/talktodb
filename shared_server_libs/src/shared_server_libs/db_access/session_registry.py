@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from shared_server_libs.db_access.config import TALKTODB_DB_NAME, PostgresConnectionSettings
 from shared_server_libs.db_access.orm import create_db_engine, DbBase
@@ -59,9 +59,10 @@ class DbSessionRegistry:
     async def close_all(cls) -> None:
         async with cls._lock:
             if cls._sessionmaker is not None:
-                engine = cls._sessionmaker.bind
-                if engine is not None:
-                    await engine.dispose()
+                # async_sessionmaker (like sessionmaker) stores bind in .kw, not .bind
+                bind = cls._sessionmaker.kw.get("bind")
+                if isinstance(bind, AsyncEngine):
+                    await bind.dispose()
             cls._sessionmaker = None
             cls._settings = None
         logger.info("talkToDB database SQLAlchemy sessionmaker disposed.")

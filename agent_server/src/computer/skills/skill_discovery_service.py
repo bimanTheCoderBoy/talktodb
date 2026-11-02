@@ -189,4 +189,4 @@ class SkillDiscoveryService:
         logger.info("[SKILLS] Discovery succeeded; %d skill(s) registered", len(skill_content_by_name))
         logger.info("[SKILLS] available_skills_xml:\n%s", available_skills_xml)
         for skill_name, content in skill_content_by_name.items():
-            logger.info("[SKILLS] skill_content[%r]:\n%s", skill_name, content)
+            logger.info("[SKILLS] skill_content[%r]", skill_name)

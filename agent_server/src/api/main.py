@@ -13,7 +13,7 @@ from computer.config.tool import get_file_system_tool_config
 from computer.skills.skill_discovery_adapter import FilesystemSkillDiscoveryAdapter
 from computer.skills.skill_discovery_service import SkillDiscoveryService
 import database_context_retrieval.domain.entity  # noqa: F401 — register DbBase ORM models
-
+import asyncio
 from shared_server_libs.db_access import (
     PostgresConnectionSettings,
     init_db_access,
@@ -56,7 +56,8 @@ async def lifespan(app: FastAPI):
         init_db_access(PostgresConnectionSettings.from_env())
         await prepare_db()
         
-        SkillDiscoveryService(FilesystemSkillDiscoveryAdapter(), SKILLS_ROOT).init()
+        service = SkillDiscoveryService(FilesystemSkillDiscoveryAdapter(), SKILLS_ROOT)
+        await asyncio.to_thread(service.init) 
     except RuntimeError as e:
         computer_skills_logger.error("[SKILLS] Startup skill discovery failed: %s", e, exc_info=True)
         raise

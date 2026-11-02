@@ -49,6 +49,7 @@ async def prepare_db() -> None:
     await DbSessionRegistry.get_sessionmaker()
 
 
+
 async def shutdown_db_access() -> None:
     global _initialized
 
