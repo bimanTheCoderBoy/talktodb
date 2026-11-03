@@ -14,6 +14,9 @@ import { useKeycloakToken } from "@/hooks/useKeycloakToken";
 import TopBar from "./TopBar";
 import { toast } from "react-toastify";
 import InterruptCard from "./interrupt/InterruptCard";
+import ToolCallInterruptModal, {
+  toolCallInterruptStubResume,
+} from "./interrupt/ToolCallInterruptModal";
 import StreamingMessageList from "./streaming-chat/StreamingMessageList";
 import ChatMessageNavigator from "./streaming-chat/ChatMessageNavigator";
 import { MessageCircle } from "lucide-react";
@@ -28,7 +31,6 @@ const getApiUrl = () => {
 
 function streamContext(threadId) {
   return {
-    project_name: "",
     user_email: keycloak.tokenParsed?.email ?? "",
     thread_id: threadId,
   };
@@ -150,7 +152,7 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
       return;
     }
 
-    if (interruptType === "ASK_HUMAN_BINARY") return;
+    if (interruptType === "ASK_HUMAN_BINARY" || interruptType === "tool_call") return;
     if (!inputValue.trim()) return;
 
     const query = inputValue.trim();
@@ -200,6 +202,15 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
     });
   };
 
+  const handleToolCallInterruptAck = async () => {
+    dismissInterrupt();
+    await submit(undefined, {
+      command: { resume: toolCallInterruptStubResume() },
+      streamResumable: true,
+      context: streamContext(currentThread?.thread_id),
+    });
+  };
+
   const handleCopyToClipboard = useCallback(async (text) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -210,8 +221,12 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
   }, []);
 
   const interruptType = interrupt?.value?.type;
-  const isHumanInterruptActive = interruptType === "ASK_HUMAN" || interruptType === "ASK_HUMAN_BINARY";
+  const isHumanInterruptActive =
+    interruptType === "ASK_HUMAN" ||
+    interruptType === "ASK_HUMAN_BINARY" ||
+    interruptType === "tool_call";
   const isBinaryInterruptActive = interruptType === "ASK_HUMAN_BINARY";
+  const isToolCallInterruptActive = interruptType === "tool_call";
 
   if (!currentThread) {
     return (
@@ -278,7 +293,7 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
             </div>
           )}
 
-          {showInterrupt && (
+          {showInterrupt && !isToolCallInterruptActive && (
             <div className="mb-2">
               <InterruptCard
                 type={interruptType}
@@ -290,6 +305,13 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
             </div>
           )}
 
+          <ToolCallInterruptModal
+            open={showInterrupt && isToolCallInterruptActive}
+            content={interrupt?.value?.content}
+            isLoading={isLoading}
+            onUnderstood={handleToolCallInterruptAck}
+          />
+
           <PromptInput
             onSubmit={handleSubmit}
             className="w-full min-w-0 border-border/80"
@@ -297,17 +319,23 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
             <PromptInputTextarea
               onChange={(e) => setInputValue(e.target.value)}
               value={inputValue}
-              disabled={isBinaryInterruptActive}
+              disabled={isBinaryInterruptActive || isToolCallInterruptActive}
               placeholder={
                 isBinaryInterruptActive
                   ? "Select Approve or Deny to continue"
-                  : "Ask about your database, schema, or data — type a question and press Enter…"
+                  : isToolCallInterruptActive
+                    ? "Acknowledge the tool popup to continue"
+                    : "Ask about your database, schema, or data — type a question and press Enter…"
               }
               className="placeholder:text-muted-foreground/90"
             />
             <PromptInputToolbar>
               <PromptInputSubmit
-                disabled={isBinaryInterruptActive || (!inputValue && !isLoading)}
+                disabled={
+                  isBinaryInterruptActive ||
+                  isToolCallInterruptActive ||
+                  (!inputValue && !isLoading)
+                }
                 status={isLoading ? "submitted" : ""}
                 className="cursor-pointer bg-primary/90 hover:bg-primary text-primary-foreground border-0 disabled:opacity-40"
               />

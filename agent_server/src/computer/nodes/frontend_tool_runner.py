@@ -1,8 +1,12 @@
+import json
+
 from langchain_core.messages import ToolMessage
 from langgraph.runtime import Runtime
+from langgraph.types import interrupt
 
-from computer.config.logger import get_computer_logger
 from computer.state import AgentState, ctx_schema_State
+from computer.tools.frontend_tool_registry import FrontendToolRegistry
+from computer.utils.frontend_tool import build_interrupt_payload, frontend_tool_error_json, parse_interrupt_result
 from computer.utils.tool_call_utils import (
     partition_tool_calls,
     pending_tool_calls,
@@ -15,11 +19,8 @@ from computer.utils.tool_result_format import (
     truncate_tool_result_for_llm,
 )
 
-logger = get_computer_logger(__name__)
 
-_FRONTEND_NOT_WIRED_JSON = (
-    '{"success": false, "error": "Frontend tool execution is not wired yet (interrupt/resume pending)."}'
-)
+
 
 
 async def frontend_tool_runner(state: AgentState, runtime: Runtime[ctx_schema_State]):
@@ -33,6 +34,7 @@ async def frontend_tool_runner(state: AgentState, runtime: Runtime[ctx_schema_St
             "ui_messages": state.ui_messages,
         }
 
+    registry = FrontendToolRegistry()
     internal_messages_to_add: list[ToolMessage] = []
     ui_messages_to_add: list[ToolMessage] = []
 
@@ -42,16 +44,45 @@ async def frontend_tool_runner(state: AgentState, runtime: Runtime[ctx_schema_St
         if not name or not tc_id:
             continue
         args = tool_call.get("args", {}) if isinstance(tool_call, dict) else getattr(tool_call, "args", {}) or {}
-        logger.info("Frontend tool pending (interrupt not wired yet): %s", name)
-        raw = ToolMessage(
-            content=_FRONTEND_NOT_WIRED_JSON,
-            tool_call_id=tc_id,
-            name=name,
-        )
+        if not isinstance(args, dict):
+            args = {}
+
+
+        # Validate the arguments
+        validated_args, args_error = registry.validate_request(name, args)
+        if args_error:
+            result_json = frontend_tool_error_json(args_error)
+            tool_args_for_format = dict(args)
+        else:
+            assert validated_args is not None
+
+            # Build the interrupt payload and send it to the frontend
+            interrupt_payload = build_interrupt_payload(name, validated_args, tc_id)
+            raw_result = interrupt(interrupt_payload)
+            parsed, parse_error = parse_interrupt_result(raw_result)
+
+            if parse_error:
+                result_json = frontend_tool_error_json(parse_error)
+                tool_args_for_format = validated_args
+            else:
+                assert parsed is not None
+                validated_response, response_error = registry.validate_response(name, parsed)
+                if response_error:
+                    result_json = frontend_tool_error_json(response_error)
+                else:
+                    assert validated_response is not None
+                    result_json = json.dumps(validated_response)
+                tool_args_for_format = validated_args
+
+
+
+                
+
+        # Format the result for the LLM and UI
         llm_content = truncate_tool_result_for_llm(
-            format_llm_tool_result(name, _FRONTEND_NOT_WIRED_JSON, tool_args=dict(args))
+            format_llm_tool_result(name, result_json, tool_args=tool_args_for_format)
         )
-        ui_content = format_ui_tool_result(name, _FRONTEND_NOT_WIRED_JSON, tool_args=dict(args))
+        ui_content = format_ui_tool_result(name, result_json, tool_args=tool_args_for_format)
         internal_messages_to_add.append(
             ToolMessage(content=llm_content, tool_call_id=tc_id, name=name)
         )

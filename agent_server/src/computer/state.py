@@ -7,7 +7,6 @@ class AgentState(BaseModel):
     internal_messages: List[AnyMessage] = []
     input_message: HumanMessage | None = None
     ui_messages: List[AnyMessage] = []
-    project_name: Optional[str] = None
     thread_id: Optional[str] = None
     user_email: Optional[str] = None
 

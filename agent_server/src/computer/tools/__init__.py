@@ -8,10 +8,6 @@ from computer.tools.dynamic import DYNAMIC_TOOLS
 from computer.tools.filesystem import get_fs_tools_for_user
 
 
-async def get_computer_tools_for_user(
-    user_id: str,
-    *,
-    project_name: str | None = None,
-) -> Sequence[BaseTool]:
+async def get_computer_tools_for_user(user_id: str) -> Sequence[BaseTool]:
     fs_tools = await get_fs_tools_for_user(user_id)
     return [*fs_tools, activate_skill, *CATALOG_CONTEXT_TOOLS, *DYNAMIC_TOOLS]

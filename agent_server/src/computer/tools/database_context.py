@@ -78,6 +78,14 @@ class RunDbQueryInput(BaseModel):
     )
 
 
+class RunDbQueryOutput(BaseModel):
+    success: bool
+    error: str | None = None
+    columns: list[str] | None = None
+    rows: list[list[Any]] | None = None
+    row_count: int | None = None
+
+
 @tool("get_database_table", args_schema=GetDatabaseTableInput, parse_docstring=False)
 async def get_database_table(
     table_name: str,
@@ -233,7 +241,7 @@ async def search_database_context(query: str) -> str:
     return result.model_dump_json()
 
 
-@frontend_tool("run_db_query")
+@frontend_tool("run_db_query", request_model=RunDbQueryInput, response_model=RunDbQueryOutput)
 @tool("run_db_query", args_schema=RunDbQueryInput, parse_docstring=False)
 async def run_db_query(
     query: str,

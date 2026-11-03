@@ -7,7 +7,6 @@ logger = get_computer_logger(__name__)
 
 
 async def input_layer_node(state: AgentState, runtime: Runtime[ctx_schema_State]):
-    project_name = runtime.context.project_name
     thread_id = getattr(runtime.context, "thread_id", None)
     user_email = getattr(runtime.context, "user_email", None)
 
@@ -22,7 +21,6 @@ async def input_layer_node(state: AgentState, runtime: Runtime[ctx_schema_State]
     return {
         "internal_messages": state.internal_messages + [user_msg],
         "ui_messages": state.ui_messages + [user_msg],
-        "project_name": project_name,
         "user_email": user_email,
         "thread_id": thread_id,
     }

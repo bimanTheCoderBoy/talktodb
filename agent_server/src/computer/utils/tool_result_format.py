@@ -46,6 +46,10 @@ _HIT_FIELDS = [
 ]
 
 
+#NOTE : for Developer
+# All the formator and the system mostly work on str and Dict 
+# For less error always make tool that return Dict and then make it str by json.dumps then pass it.
+
 def _serialize_passthrough(result: BaseModel | dict[str, Any] | str) -> str:
     if isinstance(result, str):
         return result
@@ -255,6 +259,7 @@ _LLM_FORMATTERS: dict[str, Callable[..., str | dict[str, Any]]] = {
     TOOL_SEARCH_DATABASE_CONTEXT: _compact_llm_search_database_context,
     TOOL_GET_DYNAMIC_TOOL: _compact_llm_json_passthrough,
     TOOL_CALL_DYNAMIC_TOOL: _compact_llm_json_passthrough,
+
 }
 
 _UI_FORMATTERS: dict[str, Callable[..., str]] = {
@@ -275,6 +280,8 @@ def format_llm_tool_result(
     tool_args: dict[str, Any] | None = None,
 ) -> str:
     formatter = _LLM_FORMATTERS.get(tool_name)
+
+    #FIXME: This is a hack to get the run_db_query tool to work.
     if formatter is None and tool_name == TOOL_RUN_DB_QUERY:
         data = _coerce_dict(result)
         if data is None:
