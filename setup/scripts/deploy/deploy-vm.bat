@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================================
-REM  Full VM deployment from Windows — push code, ship .env files, run remote.
+REM  Full VM deployment from Windows - push code, ship .env files, run remote.
 REM
 REM  Requirements:
 REM    - Git for Windows (provides ssh + scp)
@@ -62,7 +62,7 @@ echo ===============================================================
 echo.
 
 REM =====================================================================
-REM  STEP 1/6 — git push from Windows
+REM  STEP 1/6 - git push from Windows
 REM =====================================================================
 echo [1/6] Pushing latest code from Windows...
 git push
@@ -75,7 +75,7 @@ echo        OK
 echo.
 
 REM =====================================================================
-REM  STEP 2/6 — Transfer .env files via scp
+REM  STEP 2/6 - Transfer .env files via scp
 REM  These are gitignored so they must be shipped manually.
 REM  We send the files that Docker actually reads at runtime.
 REM =====================================================================
@@ -128,7 +128,7 @@ echo        OK
 echo.
 
 REM =====================================================================
-REM  STEP 3/6 — git pull on VM
+REM  STEP 3/6 - git pull on VM
 REM =====================================================================
 echo [3/6] Running git pull on VM...
 ssh "%TARGET%" "cd %REMOTE% && git pull"
@@ -142,7 +142,7 @@ echo        OK
 echo.
 
 REM =====================================================================
-REM  STEP 4/6 — Run deploy-to-host.sh on VM (the full 9-step deploy)
+REM  STEP 4/6 - Run deploy-to-host.sh on VM (the full 9-step deploy)
 REM  This does: compose down, port check, certs, volume rm, env rewrite,
 REM             compose build, compose up auth, compose up core.
 REM =====================================================================
@@ -158,14 +158,14 @@ echo        OK
 echo.
 
 REM =====================================================================
-REM  STEP 5/6 — Check auth_server container status
+REM  STEP 5/6 - Check auth_server container status
 REM =====================================================================
 echo [5/6] Checking auth_server container status on VM...
 ssh "%TARGET%" "cd %REMOTE%/auth_server && docker compose ps"
 echo.
 
 REM =====================================================================
-REM  STEP 6/6 — Check core-service container status
+REM  STEP 6/6 - Check core-service container status
 REM =====================================================================
 echo [6/6] Checking core-service container status on VM...
 ssh "%TARGET%" "cd %REMOTE% && docker compose ps"

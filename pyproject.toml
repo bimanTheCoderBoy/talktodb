@@ -13,12 +13,16 @@ dev = [
 
 # ── Dev run ──────────────────────────────────────────────────────────────
 [tool.poe.tasks.dev]
-help = "Start base dev env (postgres, phoenix, redis, agent_server, frontend, rag)"
+help = "Start base dev env (postgres, redis, agent_server, frontend, rag; phoenix disabled)"
 cmd  = "setup/dev/run.bat -base"
 
-[tool.poe.tasks."dev:rag"]
-help = "Start base + RAG retrieval server (same as dev; RAG is included in base)"
-cmd  = "setup/dev/run.bat -base"
+[tool.poe.tasks."dev:stop"]
+help = "Stop local dev terminals (backend, frontend, rag) from last poe dev"
+cmd  = "setup/dev/stop.bat"
+
+[tool.poe.tasks."dev:status"]
+help = "Show dev services on/off (docker health or local PIDs / ports)"
+cmd  = "setup/dev/status.bat"
 
 # ── Local build ──────────────────────────────────────────────────────────
 [tool.poe.tasks.local-build]

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# talkToDB — load dist images and start Keycloak + core stack.
+# talkToDB - load dist images and start Keycloak + core stack.
 #
 # Usage: ./start.sh <hostname>
 # Example: ./start.sh myhost.example.com
@@ -38,7 +38,8 @@ docker compose -f "$DIST/auth_server/docker-compose.yml" --env-file "$DIST/auth_
 docker compose -f "$DIST/docker-compose.yml" --env-file "$DIST/.env" down >/dev/null 2>&1 || true
 
 echo "[2/8] Checking ports..."
-PORTS=(8443 80 443 5432 6379 6006 4317 8010)
+PORTS=(8443 80 443 5432 6379 8010)
+# Phoenix disabled: 6006 4317
 for p in "${PORTS[@]}"; do
   if ss -tln 2>/dev/null | grep -qE ":${p}([[:space:]]|$)" || \
      netstat -tln 2>/dev/null | grep -qE ":${p}([[:space:]]|$)"; then
@@ -88,4 +89,4 @@ echo "[8/8] Done."
 echo "  Keycloak : https://${NEW_HOST}:8443"
 echo "  Frontend : https://${NEW_HOST}"
 echo "  RAG      : http://${NEW_HOST}:8010"
-echo "  Phoenix  : http://${NEW_HOST}:6006"
+# echo "  Phoenix  : http://${NEW_HOST}:6006"

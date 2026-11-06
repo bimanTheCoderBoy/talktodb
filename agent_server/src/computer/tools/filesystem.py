@@ -13,7 +13,7 @@ from computer.config.tool import get_file_system_tool_config
 
 
 
-BASE_DIR = Path(get_file_system_tool_config.base_dir)/"computer"
+BASE_DIR = Path(get_file_system_tool_config().base_dir) / "computer"
 
 USERS_DIR = BASE_DIR / "users"
 SKILLS_DIR = BASE_DIR / "skills"

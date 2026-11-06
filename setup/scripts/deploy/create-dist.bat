@@ -22,7 +22,8 @@ if "%PREFLIGHT_OK%"=="0" (
 docker compose -f "%REPO%\docker-compose.yml" --env-file "%REPO%\.env" build
 if errorlevel 1 exit /b 1
 
-for %%I in ("postgis/postgis:16-3.4" "redis:7-alpine" "arizephoenix/phoenix:20.3.0" "quay.io/keycloak/keycloak:25.0.2") do (
+REM Phoenix disabled: "arizephoenix/phoenix:20.3.0"
+for %%I in ("postgis/postgis:16-3.4" "redis:7-alpine" "quay.io/keycloak/keycloak:25.0.2") do (
     docker image inspect %%~I >nul 2>nul || docker pull %%~I
 )
 
@@ -35,8 +36,8 @@ docker save -o "%DIST%\all-images.tar" ^
     talktodb-rag_retrieval_server ^
     postgis/postgis:16-3.4 ^
     redis:7-alpine ^
-    arizephoenix/phoenix:20.3.0 ^
     quay.io/keycloak/keycloak:25.0.2
+REM     arizephoenix/phoenix:20.3.0 ^
 
 copy "%REPO%\docker-compose.yml" "%DIST%\docker-compose.yml" >nul
 copy "%REPO%\.env" "%DIST%\.env" >nul

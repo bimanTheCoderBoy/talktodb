@@ -169,3 +169,9 @@ frontend/public/documentations/
 /thoughts/**
 /docs/**
 experiments/**
+
+# Dev session PIDs (poe dev / dev:stop)
+setup/dev/dev-session.properties
+
+#local store
+**/talktodb_data/**

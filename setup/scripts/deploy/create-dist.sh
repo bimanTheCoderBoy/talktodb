@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 DIST="$REPO/dist"
 
-echo "Create-Dist — Repo: $REPO"
+echo "Create-Dist - Repo: $REPO"
 
 echo "[pre-flight] Checking wheel artifacts..."
 PREFLIGHT_OK=1
@@ -29,8 +29,8 @@ docker compose -f "$REPO/docker-compose.yml" --env-file "$REPO/.env" build
 for img in \
   "postgis/postgis:16-3.4" \
   "redis:7-alpine" \
-  "arizephoenix/phoenix:20.3.0" \
   "quay.io/keycloak/keycloak:25.0.2"
+  # Phoenix disabled: "arizephoenix/phoenix:20.3.0"
 do
   docker image inspect "$img" >/dev/null 2>&1 || docker pull "$img"
 done
@@ -44,8 +44,8 @@ docker save -o "$DIST/all-images.tar" \
   talktodb-rag_retrieval_server \
   postgis/postgis:16-3.4 \
   redis:7-alpine \
-  arizephoenix/phoenix:20.3.0 \
   quay.io/keycloak/keycloak:25.0.2
+  # Phoenix disabled: arizephoenix/phoenix:20.3.0
 
 cp "$REPO/docker-compose.yml" "$DIST/docker-compose.yml"
 cp "$REPO/.env"               "$DIST/.env"

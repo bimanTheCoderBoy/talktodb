@@ -23,18 +23,18 @@
 #    2.  docker compose down  (root / core services)
 #    3.  Check required ports are free
 #    4.  Generate TLS certificate for new hostname
-#    5.  (reserved — Keycloak volume removal, currently disabled)
+#    5.  (reserved - Keycloak volume removal, currently disabled)
 #    6.  Rewrite hostname / credentials in .env files
 #    7.  docker compose build (builds images from pre-built dist/ wheels)
-#    8.  docker compose up -d (auth_server — Keycloak first, creates external network)
-#    9.  docker compose up -d (root — core services)
+#    8.  docker compose up -d (auth_server Keycloak first, then app stack)
+#    9.  docker compose up -d (root - core services)
 # ============================================================================
 
 set -euo pipefail
 
 usage() {
   echo "==============================================================="
-  echo "  AAN Deploy-to-Host — Build and deploy the full stack"
+  echo "  AAN Deploy-to-Host - Build and deploy the full stack"
   echo "==============================================================="
   echo
   echo "  Usage: $(basename "$0") <hostname> <smb-user> <smb-password> [options]"
@@ -90,7 +90,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     *)
-      echo "WARNING: Unknown option '$1' — ignoring"
+      echo "WARNING: Unknown option '$1' - ignoring"
       shift
       ;;
   esac
@@ -121,7 +121,7 @@ echo
 set_env() {
   local file="$1" key="$2" val="$3"
   if [[ ! -f "$file" ]]; then
-    echo "        SKIP — $file not found"
+    echo "        SKIP - $file not found"
     return 0
   fi
   awk -v k="$key" -v v="$val" '
@@ -133,7 +133,7 @@ set_env() {
 
 
 # =====================================================================
-#  PRE-FLIGHT — Verify dist/ folders exist (local-build.sh must run first)
+#  PRE-FLIGHT - Verify dist/ folders exist (local-build.sh must run first)
 # =====================================================================
 echo "[pre-flight] Checking that wheel artifacts exist..."
 PREFLIGHT_OK=1
@@ -149,11 +149,11 @@ if [[ "$PREFLIGHT_OK" -eq 0 ]]; then
   echo "       Run  setup/scripts/local-build/local-build.sh -all  first."
   exit 1
 fi
-echo "       OK — all dist/ folders present"
+echo "       OK - all dist/ folders present"
 echo
 
 # =====================================================================
-#  STEP 1 — docker compose down (auth_server)
+#  STEP 1 - docker compose down (auth_server)
 # =====================================================================
 echo "[1/9] Stopping auth_server containers..."
 if docker compose -f "$REPO/auth_server/docker-compose.yml" \
@@ -165,7 +165,7 @@ fi
 echo
 
 # =====================================================================
-#  STEP 2 — docker compose down (core services)
+#  STEP 2 - docker compose down (core services)
 # =====================================================================
 echo "[2/9] Stopping core-service containers..."
 if docker compose -f "$REPO/docker-compose.yml" \
@@ -177,10 +177,11 @@ fi
 echo
 
 # =====================================================================
-#  STEP 3 — Check required ports are free
+#  STEP 3 - Check required ports are free
 # =====================================================================
 echo "[3/9] Checking required ports are free..."
-PORTS=(8443 8001 80 443 8502 4317 6006 9999 5432 8003 8009 6379 5433 8002 8010)
+PORTS=(8443 8001 80 443 8502 9999 5432 8003 8009 6379 5433 8002 8010)
+# Phoenix disabled: 4317 6006
 BLOCKED=0
 for p in "${PORTS[@]}"; do
   if ss -tln 2>/dev/null | grep -qE ":${p}([[:space:]]|$)" || \
@@ -194,11 +195,11 @@ if [[ $BLOCKED -eq 1 ]]; then
   echo "       ERROR: One or more required ports are occupied. Free them and retry."
   exit 1
 fi
-echo "       OK — all ports free"
+echo "       OK - all ports free"
 echo
 
 # =====================================================================
-#  STEP 4 — Generate TLS certificate
+#  STEP 4 - Generate TLS certificate
 # =====================================================================
 echo "[4/9] Generating TLS certificate for $NEW_HOST..."
 CERT_SCRIPT="$REPO/setup/certs/generate-certs.sh"
@@ -212,18 +213,18 @@ echo "       OK"
 echo
 
 # =====================================================================
-#  STEP 5 — Remove Keycloak Postgres volume (force realm re-import)
+#  STEP 5 - Remove Keycloak Postgres volume (force realm re-import)
 # =====================================================================
 # echo "[5/9] Removing Keycloak DB volume (forces fresh realm import)..."
-# if docker volume rm aana_auth_server_keycloak_postgres_data 2>/dev/null; then
-#   echo "       OK — volume removed"
+# if docker volume rm scalyai_auth_server_keycloak_postgres_data 2>/dev/null; then
+#   echo "       OK - volume removed"
 # else
-#   echo "       WARNING: Volume not found or already removed — continuing"
+#   echo "       WARNING: Volume not found or already removed - continuing"
 # fi
 # echo
 
 # =====================================================================
-#  STEP 6 — Rewrite .env files
+#  STEP 6 - Rewrite .env files
 # =====================================================================
 echo "[6/9] Updating environment files..."
 
@@ -245,7 +246,7 @@ if [[ -f "$BE_ENV" ]]; then
   set_env "$BE_ENV" "KEYCLOAK_ISSUER" "https://${NEW_HOST}:8443"
   echo "       OK"
 else
-  echo "       SKIP — file not found"
+  echo "       SKIP - file not found"
 fi
 
 # --- 6d) setup/prod_envs/rag_retrieval_server/.env ---
@@ -261,7 +262,7 @@ fi
 echo
 
 # =====================================================================
-#  STEP 7 — docker compose build (core services)
+#  STEP 7 - docker compose build (core services)
 #  BuildKit is required for --mount=type=cache in Dockerfiles.
 # =====================================================================
 echo "[7/9] Building Docker images from pre-built dist/ wheels..."
@@ -272,7 +273,7 @@ echo "       OK"
 echo
 
 # =====================================================================
-#  STEP 8 — docker compose up -d (auth_server — must start first)
+#  STEP 8 - docker compose up -d (auth_server - must start first)
 # =====================================================================
 echo "[8/9] Starting auth_server (Keycloak)..."
 docker compose -f "$REPO/auth_server/docker-compose.yml" \
@@ -281,7 +282,7 @@ echo "       OK"
 echo
 
 # =====================================================================
-#  STEP 9 — docker compose up -d (core services)
+#  STEP 9 - docker compose up -d (core services)
 # =====================================================================
 echo "[9/9] Starting core services..."
 docker compose -f "$REPO/docker-compose.yml" --env-file "$REPO/.env" up -d
@@ -298,7 +299,7 @@ echo "  Keycloak : https://${NEW_HOST}:8443"
 echo "  Frontend : https://${NEW_HOST}"
 echo "  Dozzle   : http://${NEW_HOST}:9999"
 echo "  Pipeline : http://${NEW_HOST}:8502"
-echo "  Phoenix  : http://${NEW_HOST}:6006"
+# echo "  Phoenix  : http://${NEW_HOST}:6006"
 echo "  RAG      : http://${NEW_HOST}:8010"
 echo
 echo "  Tip: If you see stale Keycloak tokens, clear browser localStorage."

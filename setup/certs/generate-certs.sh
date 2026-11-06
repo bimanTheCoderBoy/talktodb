@@ -9,8 +9,8 @@
 #   ./generate-certs.sh myserver.com 730   # Custom hostname + 730 days validity
 #
 # Output:
-#   setup/certs/tls.crt   — Certificate (shared by Keycloak + Nginx)
-#   setup/certs/tls.key   — Private key
+#   setup/certs/tls.crt   - Certificate (shared by Keycloak + Nginx)
+#   setup/certs/tls.key   - Private key
 # ============================================================================
 
 set -e
@@ -43,7 +43,7 @@ openssl req -x509 -nodes -newkey rsa:2048 \
   -subj "/CN=${HOSTNAME}/O=TEOCO/OU=AANA" \
   -addext "subjectAltName=DNS:${HOSTNAME},DNS:localhost,DNS:keycloak-server,IP:127.0.0.1"
 
-# Set permissions — both files must be readable by the non-root user the
+# Set permissions - both files must be readable by the non-root user the
 # Keycloak container runs as (uid 1000). Tightening tls.key to 600 owned by
 # the deploy user locks the container out and Keycloak crash-loops with
 # `ERROR: /opt/keycloak/conf/tls.key`. Self-signed dev cert, so 644 is fine;
@@ -62,7 +62,7 @@ openssl x509 -in "${CERT_DIR}/tls.crt" -noout -subject -dates -ext subjectAltNam
 echo ""
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 echo "Next steps:"
-echo "  1. docker compose (repo root) mounts ${CERT_DIR} -> frontend /etc/nginx/certs & keycloak — no copy needed."
+echo "  1. docker compose (repo root) mounts ${CERT_DIR} -> frontend /etc/nginx/certs & keycloak - no copy needed."
 echo "  2. Restart frontend:  cd ${REPO_ROOT} && docker compose up -d frontend"
 echo "  3. (Optional) auth server Keycloak:  cd ${REPO_ROOT}/auth_server && docker compose up -d"
 echo ""

@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
-REM talkToDB — load dist images and start stack (Windows dist folder).
+REM talkToDB - load dist images and start stack (Windows dist folder).
 REM Usage: start.bat <hostname>
 
 if "%~1"=="" (

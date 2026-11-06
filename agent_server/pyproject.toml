@@ -25,9 +25,10 @@ dependencies = [
     "fastapi==0.141.1",
     "python-multipart==0.0.32",
     "sqlalchemy[asyncio]==2.0.52",
-    "arize-phoenix-otel==0.13.1",
-    "openinference-instrumentation-langchain==0.1.70",
     "deepagents>=0.7.9",
+    # Phoenix / OpenInference (disabled — LangSmith tracing; see src/api/main.py)
+    # "arize-phoenix-otel==0.13.1",
+    # "openinference-instrumentation-langchain==0.1.70",
 ]
 
 

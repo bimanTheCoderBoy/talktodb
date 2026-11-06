@@ -75,7 +75,7 @@ class LLMExecutionService:
         # All retries exhausted
         if result is None:
             emit_langgraph_event(LanggraphEvent(step="3/3", status="failed", message=f"Failed to generate response after 3 retries. {error}"))
-            # raise Exception(f"Failed to generate response after 3 retries. {error}")
+            raise Exception(f"Failed to generate response after 3 retries. {error}")
 
         content = result.content or "Failed to generate response. Please try again."
         internal_response = AIMessage(content=content, tool_calls=[])

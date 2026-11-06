@@ -1,4 +1,4 @@
-name: aana_auth_server
+name: scalyai_auth_server
 
 services:
   keycloak-db:

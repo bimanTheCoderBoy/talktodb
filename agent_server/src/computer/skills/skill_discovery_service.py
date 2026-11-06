@@ -132,8 +132,8 @@ class SkillDiscoveryService:
         skill_files = self._adapter.discover_skill_files(root)
         if not skill_files:
             msg = f"No SKILL.md files found under {root}"
-            logger.error("[SKILLS] %s", msg)
-            raise RuntimeError(msg)
+            logger.warning("[SKILLS] %s", msg)
+            # raise RuntimeError(msg)
 
         logger.info("[SKILLS] Found %d SKILL.md file(s)", len(skill_files))
 

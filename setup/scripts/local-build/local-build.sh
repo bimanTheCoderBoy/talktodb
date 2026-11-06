@@ -66,7 +66,7 @@ if [[ -f "$LOCK_FILE" ]]; then
   fi
 fi
 if [[ -z "$CURRENT_LOCK_HASH" ]]; then
-  echo "WARNING: Could not hash uv.lock — will force requirements export"
+  echo "WARNING: Could not hash uv.lock - will force requirements export"
   FORCE_DEPS=1
 fi
 

@@ -23,11 +23,11 @@ REM    1.  docker compose down  (auth_server)
 REM    2.  docker compose down  (root / core services)
 REM    3.  Check required ports are free
 REM    4.  Generate TLS certificate for new hostname
-REM    5.  (reserved — Keycloak volume removal, currently disabled)
+REM    5.  (reserved - Keycloak volume removal, currently disabled)
 REM    6.  Rewrite hostname / credentials in .env files
 REM    7.  docker compose build (builds images from pre-built dist/ wheels)
-REM    8.  docker compose up -d (auth_server — Keycloak first, creates external network)
-REM    9.  docker compose up -d (root — core services)
+REM    8.  docker compose up -d (auth_server Keycloak first, then app stack)
+REM    9.  docker compose up -d (root - core services)
 REM ============================================================================
 
 setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
@@ -72,7 +72,7 @@ if /i "%~1"=="--cwe_url" (
     shift & shift
     goto :parse_opts
 )
-echo WARNING: Unknown option "%~1" — ignoring
+echo WARNING: Unknown option "%~1" - ignoring
 shift
 goto :parse_opts
 :done_opts
@@ -91,7 +91,7 @@ echo ===============================================================
 echo.
 
 REM =====================================================================
-REM  PRE-FLIGHT — Verify dist/ folders exist (local-build.bat must run first)
+REM  PRE-FLIGHT - Verify dist/ folders exist (local-build.bat must run first)
 REM =====================================================================
 echo [pre-flight] Checking that wheel artifacts exist...
 set "PREFLIGHT_OK=1"
@@ -107,11 +107,11 @@ if "%PREFLIGHT_OK%"=="0" (
     echo        Run  setup\scripts\local-build\local-build.bat -all  first.
     exit /b 1
 )
-echo        OK — all dist/ folders present
+echo        OK - all dist/ folders present
 echo.
 
 REM =====================================================================
-REM  STEP 1 — docker compose down (auth_server)
+REM  STEP 1 - docker compose down (auth_server)
 REM =====================================================================
 echo [1/9] Stopping auth_server containers...
 docker compose -f "%REPO%\auth_server\docker-compose.yml" --env-file "%REPO%\auth_server\.env" down
@@ -123,7 +123,7 @@ if errorlevel 1 (
 echo.
 
 REM =====================================================================
-REM  STEP 2 — docker compose down (core services)
+REM  STEP 2 - docker compose down (core services)
 REM =====================================================================
 echo [2/9] Stopping core-service containers...
 docker compose -f "%REPO%\docker-compose.yml" --env-file "%REPO%\.env" down
@@ -135,10 +135,11 @@ if errorlevel 1 (
 echo.
 
 REM =====================================================================
-REM  STEP 3 — Check required ports are free
+REM  STEP 3 - Check required ports are free
 REM =====================================================================
 echo [3/9] Checking required ports are free...
-set "PORTS=8443 8001 80 443 8502 4317 6006 9999 5432 8003 8009 6379 5433 8002 8010"
+REM Phoenix disabled: 4317 6006
+set "PORTS=8443 8001 80 443 8502 9999 5432 8003 8009 6379 5433 8002 8010"
 set "BLOCKED="
 for %%P in (%PORTS%) do (
     netstat -ano 2>nul | findstr /R "LISTENING" | findstr ":%%P " >nul 2>nul
@@ -152,11 +153,11 @@ if defined BLOCKED (
     echo        ERROR: One or more required ports are occupied. Free them and retry.
     exit /b 1
 )
-echo        OK — all ports free
+echo        OK - all ports free
 echo.
 
 REM =====================================================================
-REM  STEP 4 — Generate TLS certificate
+REM  STEP 4 - Generate TLS certificate
 REM =====================================================================
 echo [4/9] Generating TLS certificate for %NEW_HOST%...
 set "CERT_SCRIPT=%REPO%\setup\certs\generate-certs.ps1"
@@ -173,19 +174,19 @@ echo        OK
 echo.
 
 REM =====================================================================
-REM  STEP 5 — Remove Keycloak Postgres volume (force realm re-import)
+REM  STEP 5 - Remove Keycloak Postgres volume (force realm re-import)
 REM =====================================================================
 @REM echo [5/9] Removing Keycloak DB volume (forces fresh realm import)...
-@REM docker volume rm aana_auth_server_keycloak_postgres_data >nul 2>nul
+@REM docker volume rm scalyai_auth_server_keycloak_postgres_data >nul 2>nul
 @REM if errorlevel 1 (
-@REM     echo        WARNING: Volume not found or already removed — continuing
+@REM     echo        WARNING: Volume not found or already removed - continuing
 @REM ) else (
-@REM     echo        OK — volume removed
+@REM     echo        OK - volume removed
 @REM )
 @REM echo.
 
 REM =====================================================================
-REM  STEP 6 — Rewrite .env files
+REM  STEP 6 - Rewrite .env files
 REM =====================================================================
 echo [6/9] Updating environment files...
 
@@ -230,26 +231,33 @@ if exist "%BE_ENV%" (
     )
     echo        OK
 ) else (
-    echo        SKIP — file not found
+    echo        SKIP - file not found
 )
 
 REM --- 6d) setup/prod_envs/rag_retrieval_server/.env ---
 set "RAG_ENV=%REPO%\setup\prod_envs\rag_retrieval_server\.env"
+echo        6d^) setup\prod_envs\rag_retrieval_server\.env  (STORAGE_BASE_PATH)
 if exist "%RAG_ENV%" (
     powershell -ExecutionPolicy Bypass -Command ^
       "$f = Get-Content '%RAG_ENV%' -Raw;" ^
       "$f = $f -replace '(?m)^STORAGE_BASE_PATH=.*$', 'STORAGE_BASE_PATH=/app/talktodb_data';" ^
       "[IO.File]::WriteAllText('%RAG_ENV%', $f)"
-    echo        6d) rag_retrieval_server\.env STORAGE_BASE_PATH OK
+    if errorlevel 1 (
+        echo        ERROR writing rag_retrieval_server .env
+        exit /b 1
+    )
+    echo        OK
+) else (
+    echo        SKIP - file not found
 )
 
 if not "%OPT_NETWORK_BILL%"=="" (
-    echo        NOTE: --network_bill / --eds_url / --cwe_url ignored (legacy ACSS/pipeline removed).
+    echo        NOTE: --network_bill / --eds_url / --cwe_url ignored ^(legacy ACSS/pipeline removed^).
 )
 echo.
 
 REM =====================================================================
-REM  STEP 7 — docker compose build (core services)
+REM  STEP 7 - docker compose build (core services)
 REM  BuildKit is required for --mount=type=cache in Dockerfiles.
 REM =====================================================================
 echo [7/9] Building Docker images from pre-built dist/ wheels...
@@ -264,7 +272,7 @@ echo        OK
 echo.
 
 REM =====================================================================
-REM  STEP 8 — docker compose up -d (auth_server — must start first)
+REM  STEP 8 - docker compose up -d (auth_server - must start first)
 REM =====================================================================
 echo [8/9] Starting auth_server (Keycloak)...
 docker compose -f "%REPO%\auth_server\docker-compose.yml" --env-file "%REPO%\auth_server\.env" up -d
@@ -276,7 +284,7 @@ echo        OK
 echo.
 
 REM =====================================================================
-REM  STEP 9 — docker compose up -d (core services)
+REM  STEP 9 - docker compose up -d (core services)
 REM =====================================================================
 echo [9/9] Starting core services...
 docker compose -f "%REPO%\docker-compose.yml" --env-file "%REPO%\.env" up -d
@@ -297,7 +305,7 @@ echo   Keycloak : https://%NEW_HOST%:8443
 echo   Frontend : https://%NEW_HOST%
 echo   Dozzle   : http://%NEW_HOST%:9999
 echo   Pipeline : http://%NEW_HOST%:8502
-echo   Phoenix  : http://%NEW_HOST%:6006
+REM echo   Phoenix  : http://%NEW_HOST%:6006
 echo   RAG      : http://%NEW_HOST%:8010
 echo.
 echo   Tip: If you see stale Keycloak tokens, clear browser localStorage.
@@ -411,7 +419,7 @@ exit /b 0
 
 :usage
 echo ===============================================================
-echo   AAN Deploy-to-Host — Build and deploy the full stack
+echo   AAN Deploy-to-Host - Build and deploy the full stack
 echo ===============================================================
 echo.
 echo   Usage: %~nx0 ^<hostname^> ^<smb-user^> ^<smb-password^> [options]

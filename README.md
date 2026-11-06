@@ -14,7 +14,7 @@ Monorepo: [uv](https://docs.astral.sh/uv/) workspace + [poethepoet](https://poet
 | Shared libs | `shared_server_libs/` | — | talkToDB Postgres session (`db_access`) |
 | Auth | `auth_server/` | 8443 | Keycloak (separate `docker compose`) |
 
-**Docker Compose** (`docker-compose.yml`): Postgres, Redis, Phoenix (optional tracing), agent, frontend, RAG.
+**Docker Compose** (`docker-compose.yml`): Postgres, Redis, agent, frontend, RAG. (Phoenix tracing is **disabled** for now — use LangSmith via agent env; the Phoenix service block remains commented in compose for later.)
 
 | Postgres DB | Purpose |
 |-------------|---------|
@@ -48,7 +48,14 @@ cd frontend && npm install && cd ..
 uv run poe dev
 ```
 
-`poe dev` → [`setup/dev/run.bat`](setup/dev/run.bat) `-base`: Postgres, Redis, Phoenix; terminals for LangGraph, Vite, RAG.
+`poe dev` → [`setup/dev/run.bat`](setup/dev/run.bat) `-base`: Postgres, Redis; terminals for LangGraph, Vite, RAG. Terminal PIDs are stored in `setup/dev/dev-session.properties`.
+
+| Command | Purpose |
+|---------|---------|
+| `uv run poe dev:status` | On/off for Keycloak, compose services, and local dev servers |
+| `uv run poe dev:stop` | Stop local terminals only (backend, frontend, rag) from the last `poe dev` |
+
+Works from **CMD or PowerShell** — same `uv run poe …` commands, or run the bats directly (e.g. `setup\dev\status.bat`). Session reset and `dev:stop` local kills are pure CMD. `run.bat` / `status.bat` call `dev-invoke.ps1` + `dev-lib.ps1` only to open tracked terminal windows and print the status table (hard to do cleanly in batch).
 
 Login via Keycloak → new chat → messages hit the `computer` assistant.
 

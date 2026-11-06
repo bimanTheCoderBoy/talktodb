@@ -20,7 +20,7 @@ def _get_config():
     """Get Keycloak configuration from environment variables."""
     keycloak_realm = os.getenv("KEYCLOAK_REALM")
     keycloak_base_url = os.getenv("KEYCLOAK_BASE_URL")
-    audience = os.getenv("AUDIENCE")
+    audience = os.getenv("KEYCLOAK_JWT_AUDIENCE")
     issuer_base_url = os.getenv("KEYCLOAK_ISSUER")
 
     
