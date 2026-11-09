@@ -50,13 +50,13 @@ if %ERRORLEVEL% NEQ 0 ( echo   [FAIL] compose start failed. & exit /b 1 )
 
 echo   Waiting for postgres ...
 :wp
-docker inspect -f "{{.State.Health.Status}}" app_postgres 2>nul | findstr /C:"healthy" >nul 2>&1
+docker inspect -f "{{.State.Health.Status}}" postgres 2>nul | findstr /C:"healthy" >nul 2>&1
 if %ERRORLEVEL% NEQ 0 ( timeout /t 2 /nobreak >nul & goto :wp )
 echo   [OK] postgres healthy.
 
 echo   Waiting for redis ...
 :wr
-docker inspect -f "{{.State.Health.Status}}" app_redis 2>nul | findstr /C:"healthy" >nul 2>&1
+docker inspect -f "{{.State.Health.Status}}" redis 2>nul | findstr /C:"healthy" >nul 2>&1
 if %ERRORLEVEL% NEQ 0 ( timeout /t 2 /nobreak >nul & goto :wr )
 echo   [OK] redis healthy.
 

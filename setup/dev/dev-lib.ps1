@@ -213,8 +213,8 @@ function Show-DevStatus {
     $rows = @(
         (New-DockerStatusRow -Service "keycloak" -ContainerName "keycloak-server"),
         (New-DockerStatusRow -Service "keycloak postgres" -ContainerName "keycloak-postgres"),
-        (New-DockerStatusRow -Service "postgres" -ContainerName "app_postgres"),
-        (New-DockerStatusRow -Service "redis" -ContainerName "app_redis")
+        (New-DockerStatusRow -Service "postgres" -ContainerName "postgres"),
+        (New-DockerStatusRow -Service "redis" -ContainerName "redis")
         # (New-DockerStatusRow -Service "phoenix" -ContainerName "phoenix")  # disabled — LangSmith tracing
     )
 

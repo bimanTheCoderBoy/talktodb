@@ -2,7 +2,7 @@
 members = [
     "agent_server",
     "shared_server_libs",
-    "rag_retrieval_server",
+    "rag_retrieval_server"
 ]
 [dependency-groups]
 dev = [

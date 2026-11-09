@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import keycloak from "@/keycloak";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, Mail, Shield, ChevronUp } from "lucide-react";
+import { LogOut, Mail } from "lucide-react";
+import ConnectorSettings from "@/components/frontend_tool_calls/ConnectorSettings";
 
 function UserCard() {
   const [isOpen, setIsOpen] = useState(false);
@@ -90,6 +91,7 @@ function UserCard() {
 
           {/* User Info */}
           <div className="p-3 space-y-1">
+            <ConnectorSettings />
             {user?.email && (
               <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary dark:bg-slate-800/50 border border-border dark:border-slate-700/30">
                 <Mail className="w-4 h-4 text-primary flex-shrink-0" />

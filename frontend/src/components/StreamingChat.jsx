@@ -13,10 +13,7 @@ import keycloak from "../keycloak";
 import { useKeycloakToken } from "@/hooks/useKeycloakToken";
 import TopBar from "./TopBar";
 import { toast } from "react-toastify";
-import InterruptCard from "./interrupt/InterruptCard";
-import ToolCallInterruptModal, {
-  toolCallInterruptStubResume,
-} from "./interrupt/ToolCallInterruptModal";
+import { useFrontendToolCallInterrupt } from "@/components/frontend_tool_calls/useFrontendToolCallInterrupt";
 import StreamingMessageList from "./streaming-chat/StreamingMessageList";
 import ChatMessageNavigator from "./streaming-chat/ChatMessageNavigator";
 import { MessageCircle } from "lucide-react";
@@ -29,7 +26,7 @@ const getApiUrl = () => {
   return configuredUrl;
 };
 
-function streamContext(threadId) {
+function buildStreamContext(threadId) {
   return {
     user_email: keycloak.tokenParsed?.email ?? "",
     thread_id: threadId,
@@ -39,11 +36,16 @@ function streamContext(threadId) {
 export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setCurrentThread, addNewThread }) {
   const [inputValue, setInputValue] = useState("");
   const [streamErrorText, setStreamErrorText] = useState("");
-  const [dismissedInterruptKey, setDismissedInterruptKey] = useState(null);
   const [tool_intermetiate_message_via_custom_events, setToolIntermetiateMessageViaCustomEvents] = useState(null);
   const [chatNavState, setChatNavState] = useState(null);
+  const [frontendToolStopSignal, setFrontendToolStopSignal] = useState(false);
   const messagesKey = "ui_messages";
   const token = useKeycloakToken();
+
+  const streamContext = useMemo(
+    () => buildStreamContext(currentThread?.thread_id ?? ""),
+    [currentThread?.thread_id],
+  );
 
   const formatStreamError = (err) => {
     if (!err) return "";
@@ -102,22 +104,43 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
     return deferredMessages.slice(-MAX_TOTAL_MESSAGES);
   }, [deferredMessages]);
 
-  const getInterruptKey = (interruptVal) => {
-    if (!interruptVal?.value) return null;
-    const type = interruptVal.value.type ?? "";
-    const content = interruptVal.value.content;
-    const contentStr = typeof content === "string" ? content : JSON.stringify(content ?? null);
-    return `${type}:${contentStr.slice(0, 300)}`;
-  };
-  const currentInterruptKey = getInterruptKey(interrupt);
-  const showInterrupt = currentInterruptKey !== null && currentInterruptKey !== dismissedInterruptKey;
-  const dismissInterrupt = useCallback(() => {
-    setDismissedInterruptKey(currentInterruptKey);
-  }, [currentInterruptKey]);
+  const interruptType = interrupt?.value?.type;
+
+  const currentInterruptId = useMemo(() => {
+    if (interruptType !== "tool_call" || interrupt?.id == null) {
+      return null;
+    }
+    return String(interrupt.id);
+  }, [interruptType, interrupt?.id]);
+
+  const setToolProgress = useCallback((value) => {
+    setToolIntermetiateMessageViaCustomEvents(value);
+  }, []);
+
+  const { isFrontendExecuting, runEngine } = useFrontendToolCallInterrupt({
+    submit,
+    setToolProgress,
+    setStreamErrorText,
+    streamContext,
+    stopSignal: frontendToolStopSignal,
+  });
 
   useEffect(() => {
-    setDismissedInterruptKey(null);
-  }, [currentThread?.thread_id]);
+    if (!frontendToolStopSignal) {
+      return;
+    }
+    setFrontendToolStopSignal(false);
+  }, [frontendToolStopSignal]);
+
+  useEffect(() => {
+    if (currentInterruptId == null) {
+      return;
+    }
+    if (!interrupt) {
+      return;
+    }
+    runEngine(interrupt);
+  }, [currentInterruptId]);
 
   useEffect(() => {
     if (!errorMessage) {
@@ -134,41 +157,36 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
 
   useEffect(() => {
     setToolIntermetiateMessageViaCustomEvents(null);
+    setFrontendToolStopSignal(false);
   }, [currentThread?.thread_id]);
 
+  const isSubmitLoading = isLoading || isFrontendExecuting;
+
   const handleSubmit = async (e) => {
-    dismissInterrupt();
     e.preventDefault();
     if (!currentThread?.thread_id) return;
 
     setStreamErrorText("");
     setToolIntermetiateMessageViaCustomEvents(null);
-    const interruptType = interrupt?.value?.type;
 
-    if (isLoading) {
-      await stop();
+    if (isSubmitLoading) {
+      setFrontendToolStopSignal((prev) => !prev);
+      if (isLoading) {
+        await stop();
+      }
       setInputValue("");
       setStreamErrorText("Request cancelled by you.");
       return;
     }
 
-    if (interruptType === "ASK_HUMAN_BINARY" || interruptType === "tool_call") return;
+    if (interruptType === "tool_call") return;
     if (!inputValue.trim()) return;
 
     const query = inputValue.trim();
     const humanMessage = { type: "human", content: query };
     setInputValue("");
 
-    const ctx = streamContext(currentThread.thread_id);
-
-    if (interruptType === "ASK_HUMAN") {
-      await submit(undefined, {
-        command: { resume: query },
-        streamResumable: true,
-        context: ctx,
-      });
-      return;
-    }
+    const ctx = streamContext;
 
     if (messages.length === 0) {
       const title = "CE-" + (query.slice(0, 40) || "New chat");
@@ -193,24 +211,6 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
     );
   };
 
-  const handleBinaryInterrupt = async (approved) => {
-    dismissInterrupt();
-    await submit(undefined, {
-      command: { resume: approved },
-      streamResumable: true,
-      context: streamContext(currentThread?.thread_id),
-    });
-  };
-
-  const handleToolCallInterruptAck = async () => {
-    dismissInterrupt();
-    await submit(undefined, {
-      command: { resume: toolCallInterruptStubResume() },
-      streamResumable: true,
-      context: streamContext(currentThread?.thread_id),
-    });
-  };
-
   const handleCopyToClipboard = useCallback(async (text) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -220,13 +220,8 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
     }
   }, []);
 
-  const interruptType = interrupt?.value?.type;
-  const isHumanInterruptActive =
-    interruptType === "ASK_HUMAN" ||
-    interruptType === "ASK_HUMAN_BINARY" ||
-    interruptType === "tool_call";
-  const isBinaryInterruptActive = interruptType === "ASK_HUMAN_BINARY";
-  const isToolCallInterruptActive = interruptType === "tool_call";
+  const isFrontendToolCallBusy =
+    interruptType === "tool_call" && (isFrontendExecuting || isLoading);
 
   if (!currentThread) {
     return (
@@ -275,11 +270,7 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
       </div>
 
       <div className="w-full px-3 sm:px-6 lg:px-10 mb-5 flex justify-center items-center bg-transparent">
-        <div
-          className={`w-full max-w-[min(1120px,100%)] flex flex-col gap-2 ${
-            isHumanInterruptActive ? "rounded-2xl bg-primary/15 border border-primary/35 p-2" : ""
-          }`}
-        >
+        <div className="w-full max-w-[min(1120px,100%)] flex flex-col gap-2">
           {!!streamErrorText && (
             <div className="mb-2 flex items-start gap-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-600 dark:text-red-200 text-sm min-w-0">
               <div className="flex-1 min-w-0 whitespace-pre-wrap wrap-break-word">{streamErrorText}</div>
@@ -293,25 +284,6 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
             </div>
           )}
 
-          {showInterrupt && !isToolCallInterruptActive && (
-            <div className="mb-2">
-              <InterruptCard
-                type={interruptType}
-                content={interrupt?.value?.content}
-                isLoading={isLoading}
-                onApprove={() => handleBinaryInterrupt(true)}
-                onDeny={() => handleBinaryInterrupt(false)}
-              />
-            </div>
-          )}
-
-          <ToolCallInterruptModal
-            open={showInterrupt && isToolCallInterruptActive}
-            content={interrupt?.value?.content}
-            isLoading={isLoading}
-            onUnderstood={handleToolCallInterruptAck}
-          />
-
           <PromptInput
             onSubmit={handleSubmit}
             className="w-full min-w-0 border-border/80"
@@ -319,24 +291,18 @@ export function StreamingChat({ currentThread, sidebarOpen, setThreadTitle, setC
             <PromptInputTextarea
               onChange={(e) => setInputValue(e.target.value)}
               value={inputValue}
-              disabled={isBinaryInterruptActive || isToolCallInterruptActive}
+              disabled={isFrontendToolCallBusy}
               placeholder={
-                isBinaryInterruptActive
-                  ? "Select Approve or Deny to continue"
-                  : isToolCallInterruptActive
-                    ? "Acknowledge the tool popup to continue"
-                    : "Ask about your database, schema, or data — type a question and press Enter…"
+                isFrontendToolCallBusy
+                  ? "Running frontend tool…"
+                  : "Ask about your database, schema, or data — type a question and press Enter…"
               }
               className="placeholder:text-muted-foreground/90"
             />
             <PromptInputToolbar>
               <PromptInputSubmit
-                disabled={
-                  isBinaryInterruptActive ||
-                  isToolCallInterruptActive ||
-                  (!inputValue && !isLoading)
-                }
-                status={isLoading ? "submitted" : ""}
+                disabled={!inputValue && !isSubmitLoading}
+                status={isSubmitLoading ? "submitted" : ""}
                 className="cursor-pointer bg-primary/90 hover:bg-primary text-primary-foreground border-0 disabled:opacity-40"
               />
             </PromptInputToolbar>

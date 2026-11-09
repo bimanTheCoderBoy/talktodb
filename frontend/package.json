@@ -61,7 +61,8 @@
     "unified": "^11.0.5",
     "use-stick-to-bottom": "^1.1.1",
     "uuid": "^13.0.0",
-    "webcrypto-liner-shim": "^1.4.8"
+    "webcrypto-liner-shim": "^1.4.8",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.1.2",
