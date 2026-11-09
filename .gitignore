@@ -173,5 +173,9 @@ experiments/**
 # Dev session PIDs (poe dev / dev:stop)
 setup/dev/dev-session.properties
 
-#local store
+# -----------------------------------------------------------------------
+# Local / machine-specific (never commit)
+# -----------------------------------------------------------------------
+**/.agents/**
 **/talktodb_data/**
+setup/init/init_config_setup/population_rasters/**
